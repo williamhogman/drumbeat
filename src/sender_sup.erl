@@ -14,5 +14,5 @@ init([]) ->
 	    temporary, 5000, worker, [sender]}]}}.
 
 start_worker(SenderPid, URL) ->
-    supervisor:start_child(SenderPid, [URL]).
+    supervisor:start_child(SenderPid, [self(), URL]).
     

@@ -16,12 +16,14 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(start_worker_sup, #state{dispatch=Dispatch} = State) ->
     Sender = drumbeat_dispatch_sup:start_sender_sup(Dispatch),
-    add_request(self(), "http://google.com"),
+    add_request(self(), "http://pg.whn.se"),
     {noreply, State#state{sender=Sender}};
 handle_cast({request, URL}, State) ->
     sender_sup:start_worker(State#state.sender, URL),
+    {noreply, State};
+handle_cast({response, {Status, Headers, Body}}, State) ->
+    io:format("Status:~3..0B~n Headers: ~p~n Body: ~s~n", [Status, Headers, Body]),
     {noreply, State}.
-
 
 
 handle_info(_, State) ->

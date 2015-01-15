@@ -1,11 +1,15 @@
 -module(sender).
 
--export([start/1, init/1]).
+-export([start/2, init/2]).
 
-start(URL) ->
-    spawn(sender, init, [URL]).
+start(Dispatch, URL) ->
+    spawn(sender, init, [Dispatch, URL]).
 
-init(URL) ->
-    io:format("Hello! ~s~n", [URL]),
-    Req = httpc:request(URL),
-    io:format("Boom! ~w~n", [Req]).
+send_request(URL) ->
+    httpc:request(URL).
+
+init(Dispatch, URL) ->
+    Res = case send_request(URL) of
+	{ok, {{_Version, Status, _Reason}, Headers, Body}} -> {Status, Headers, Body}
+    end,
+    gen_server:cast(Dispatch, {response, Res}).
