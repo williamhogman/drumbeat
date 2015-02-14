@@ -1,6 +1,6 @@
 -module(drumbeat_dispatch_serv).
 -behaviour(gen_server).
--export([start/1, init/1, handle_call/3, handle_cast/2, handle_info/2, code_change/3, terminate/2]).
+-export([start/1, init/1, handle_call/3, handle_cast/2, handle_info/2, code_change/3, terminate/2, response_received/3]).
 
 -record(state, {dispatch, sender}).
 
@@ -44,3 +44,8 @@ code_change(_OldVsn, State, _Extra) ->
 %% API
 add_request(Pid, URL) ->
     gen_server:cast(Pid, {request, URL}).
+
+response_received(Pid, Headers, Body) ->
+    gen_server:cast(Pid, {response, {ok, Headers, Body}}).
+
+

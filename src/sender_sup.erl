@@ -11,7 +11,7 @@ init([]) ->
     {ok, {{simple_one_for_one, MaxRestart, MaxTime},
 	  [{sender,
 	    {sender, start, []},
-	    temporary, 5000, worker, [sender]}]}}.
+	    permanent, 5000, worker, [sender]}]}}.
 
 start_worker(SenderPid, URL) ->
     supervisor:start_child(SenderPid, [self(), URL]).

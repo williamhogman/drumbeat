@@ -6,7 +6,8 @@
 -define(CONNECT_TIMEOUT, 5000).
 
 start(Dispatch, URL) ->
-    spawn(sender, init, [Dispatch, URL]).
+    spawn_link(sender, init, [Dispatch, URL]).
+
 
 send_request(URL, Opts) ->
     Method = proplists:get_value(method, Opts, get),
@@ -21,30 +22,15 @@ send_request(URL, Opts) ->
     httpc:request(Method, Request, HttpOptions, Options).
 
 
-
-classify_status(X) when X > 199, X < 300 -> success;
-classify_status(X) when X > 299, X < 400 -> redirection;
-classify_status(X) when X > 399, X < 500 -> client_error;
-classify_status(X) when X > 499, X < 600 -> server_error.
-
-status_is_success(Status, Accepted) when is_list(Accepted) ->
-    lists:member(Status, Accepted);
-status_is_success(Status, Accepted) when is_atom(Accepted) ->
-    classify_status(Status) == Accepted.
-    
-    
-
 % Just blow up for now
 handle_error(Reason) -> io:format("~p~n", [Reason]), erlang:error(Reason).
 
 simplify_response({{_Version, Status, _Reason}, Headers, Body}) -> {Status, Headers, Body}.
 
 
-
-
 parse_status(Status, Opts) ->
     Accepted = proplists:get_value(ok_status, Opts, success),
-    status_is_success(Status, Accepted).
+    status:is_success(Status, Accepted).
 
 handle_response({Status, Headers, Body}, Opts) ->
     case parse_status(Status, Opts) of
@@ -71,6 +57,7 @@ increment_retries(State) ->
 init(Dispatch, URL) ->
     loop(Dispatch, URL, [], #{}).
 
+
 loop(Dispatch, URL, Opts, State) ->
     case attempt_request(URL, Opts) of
 	retry ->
@@ -82,6 +69,6 @@ loop(Dispatch, URL, Opts, State) ->
 		X when X > 4 ->
 		    gen_server:cast(Dispatch, {gaveup, retries})
 	    end;
-	{done, Headers, Body} -> 
-	    gen_server:cast(Dispatch, {response, {ok, Headers, Body}})
+	{done, Headers, Body} -> drumbeat_dispatch_serv:request_received(Dispatch, Headers, Body)
+	    
     end.
