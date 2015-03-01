@@ -1,0 +1,27 @@
+@startuml
+
+actor ServiceUser
+entity System
+actor WebServices
+
+ServiceUser->System : Web action prototype request
+
+alt valid action prototype
+
+    System->ServiceUser : Accepted, request queued
+
+    loop until complete or retries => maxRetries
+    	 System->WebServices : HTTP request
+    	 WebServices->System : HTTP response
+    end
+
+    alt request fullfilled
+    	System->ServiceUser : Response
+    else request unfullfilled
+    	System->ServiceUser : Error response    
+    end
+ else invalid action prototype
+    System->ServiceUser : Invalid prototype request
+ end
+
+@enduml
