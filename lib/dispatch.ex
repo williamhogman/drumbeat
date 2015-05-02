@@ -42,7 +42,7 @@ defmodule Drumbeat.Dispatch do
 
   def handle_cast({:start_pool, pid}, current_state) do
     pool = Drumbeat.DispatchSup.start_sender_pool(pid)
-    {:ok, state(current_state, pool: pool)}
+    {:noreply, state(current_state, pool: pool)}
   end
 
   def handle_call({:request, uuid, request},
