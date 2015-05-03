@@ -35,6 +35,8 @@ defmodule Drumbeat.Dispatch do
   end
 
   def init(dispatch_sup) do
+    # XXX: Temporary hack
+    Process.register(self(), :dispatch)
     GenServer.cast(self(), {:start_pool, dispatch_sup})
     {:ok, registry} = Drumbeat.Registry.start_link()
     {:ok, state(registry: registry)}
@@ -45,10 +47,21 @@ defmodule Drumbeat.Dispatch do
     {:noreply, state(current_state, pool: pool)}
   end
 
-  def handle_call({:request, uuid, request},
-      _from, {registry}) do
+  def handle_cast({:report_response, {uuid, headers, body}}, current_state) do
+    Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
+    IO.inspect(uuid)
+    IO.inspect(headers)
+    IO.inspect(body)
+    {:noreply, current_state}
+  end
+
+  def handle_call({:place_request, uuid, request},
+                  _from, current_state) do
+    registry = state(current_state, :registry)
+    pool = state(current_state, :pool)
     :ok = Drumbeat.Registry.place_request(registry, uuid, request)
-    {:reply, {:ok, uuid}}
+    :ok = Drumbeat.SenderSup.start_worker(pool, uuid, request)
+    {:reply, {:ok, uuid}, current_state}
   end
 
   def handle_call({:get_status, uuid}, _from, {registry}) do

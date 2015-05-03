@@ -20,4 +20,11 @@ defmodule Drumbeat.Registry do
   def place_request(registry, id, request) do
     Agent.update(registry, &Dict.put(&1, id, request))
   end
+
+  @doc """
+  Removes a request from the registry
+  """
+  def remove_request(registry, id) do
+    Agent.update(registry, &Dict.delete(&1, id))
+  end
 end

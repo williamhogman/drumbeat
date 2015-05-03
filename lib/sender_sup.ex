@@ -2,8 +2,9 @@ defmodule Drumbeat.SenderSup do
   use Supervisor
 
   # API
-  def start_worker(sender_sup, request) do
-    Supervisor.start_child(sender_sup, [self(), request])
+  def start_worker(sender_sup, uuid, request) do
+    {:ok, _child} = Supervisor.start_child(sender_sup, [self(), uuid, request])
+    :ok
   end
 
   def start_link do
