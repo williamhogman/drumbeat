@@ -25,6 +25,9 @@ defmodule Drumbeat.Registry do
   Removes a request from the registry
   """
   def remove_request(registry, id) do
-    Agent.update(registry, &Dict.delete(&1, id))
+    case Agent.update(registry, &Dict.pop(&1, id)) do
+      nil -> :err
+      value -> {:ok, value}
+    end
   end
 end

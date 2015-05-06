@@ -1,3 +1,17 @@
+defmodule Drumbeat.Request do
+  defstruct url: nil, respond_to: nil, body: nil, headers: nil
+  def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
+    Drumbeat.Request.from_template(respond_to)
+    |> Dict.put_new(:body, body) 
+    |> Dict.put_new(:headers, headers)
+  end
+
+  def from_template(t) when is_nil(t)  do
+    %Drumbeat.Request{url: :http_uuid_response}
+  end
+  def from_template(t) when is_map(t), do: t
+
+end
 defmodule Drumbeat.Dispatch do
   use GenServer
   require Record
@@ -48,10 +62,9 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_cast({:report_response, {uuid, headers, body}}, current_state) do
-    Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
-    IO.inspect(uuid)
-    IO.inspect(headers)
-    IO.inspect(body)
+    {:ok, request} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
+    successor = Drumbeat.Request.successor(request, headers, body)
+    place_request(self(), uuid, successor)
     {:noreply, current_state}
   end
 
