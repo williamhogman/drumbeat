@@ -20,8 +20,8 @@ defmodule Drumbeat.Dispatch do
   @doc """
   Starts the request dispatcher
   """
-  def start_link(dispatch_sup) do
-    GenServer.start_link(__MODULE__, dispatch_sup, [])
+  def start_link(dispatch_sup, opts \\ []) do
+    GenServer.start_link(__MODULE__, [dispatch_sup], opts)
   end
 
   @doc """
@@ -48,9 +48,7 @@ defmodule Drumbeat.Dispatch do
     GenServer.call(server, :stop)
   end
 
-  def init(dispatch_sup) do
-    # XXX: Temporary hack
-    Process.register(self(), :dispatch)
+  def init([dispatch_sup]) do
     GenServer.cast(self(), {:start_pool, dispatch_sup})
     {:ok, registry} = Drumbeat.Registry.start_link()
     {:ok, state(registry: registry)}
@@ -79,7 +77,6 @@ defmodule Drumbeat.Dispatch do
 
   def handle_call({:get_status, uuid}, _from, current_state) do
     registry = state(current_state, :registry)
-    IO.inspect(registry)
     status = Drumbeat.Registry.has_request(registry, uuid)
     {:reply, {:ok, status}, current_state}
   end

@@ -16,7 +16,7 @@ defmodule Drumbeat.DispatchSup do
 
   def init(:ok) do
     children = [
-      worker(@dispatch_name, [self()])
+      worker(@dispatch_name, [self(), [name: @dispatch_name]])
     ]
     supervise(children,
               strategy: :one_for_all,
