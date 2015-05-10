@@ -2,7 +2,7 @@ defmodule Drumbeat.Request do
   defstruct url: nil, respond_to: nil, body: nil, headers: nil
   def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
     Drumbeat.Request.from_template(respond_to)
-    |> Dict.put_new(:body, body) 
+    |> Dict.put_new(:body, body)
     |> Dict.put_new(:headers, headers)
   end
 
@@ -77,9 +77,11 @@ defmodule Drumbeat.Dispatch do
     {:reply, {:ok, uuid}, current_state}
   end
 
-  def handle_call({:get_status, uuid}, _from, {registry}) do
+  def handle_call({:get_status, uuid}, _from, current_state) do
+    registry = state(current_state, :registry)
+    IO.inspect(registry)
     status = Drumbeat.Registry.has_request(registry, uuid)
-    {:reply, {:ok, status}}
+    {:reply, {:ok, status}, current_state}
   end
 
   def handle_call(:stop, _from, state) do
