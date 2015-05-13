@@ -1,16 +1,19 @@
 defmodule Drumbeat.Request do
   defstruct url: nil, respond_to: nil, body: nil, headers: nil
+  def successor(%Drumbeat.Request{respond_to: :end}, headers, body) do
+    :end
+  end
   def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
     Drumbeat.Request.from_template(respond_to)
-    |> Dict.put_new(:body, body)
-    |> Dict.put_new(:headers, headers)
+    |> Map.put_new(:body, body)
+    |> Map.put_new(:headers, headers)
   end
-
 
   def from_template(t) when is_map(t), do: t
   def message_sink(pid) do
     %Drumbeat.Request{
-                 url: {:message_sink, pid}
+                 url: {:message_sink, pid},
+                 respond_to: :end,
              }
   end
 
@@ -64,17 +67,24 @@ defmodule Drumbeat.Dispatch do
 
   def handle_cast({:report_response, {uuid, headers, body}}, current_state) do
     {:ok, request} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
-    successor = Drumbeat.Request.successor(request, headers, body)
-    place_request(self(), uuid, successor)
+    case Drumbeat.Request.successor(request, headers, body) do
+      :end -> :ok
+      successor -> internal_place_request(current_state, uuid, successor)
+    end
     {:noreply, current_state}
   end
 
-  def handle_call({:place_request, uuid, request},
-                  _from, current_state) do
+  defp internal_place_request(current_state, uuid, request) do
     registry = state(current_state, :registry)
     pool = state(current_state, :pool)
     :ok = Drumbeat.Registry.place_request(registry, uuid, request)
     :ok = Drumbeat.SenderSup.start_worker(pool, uuid, request)
+  end
+
+
+  def handle_call({:place_request, uuid, request},
+                  _from, current_state) do
+    internal_place_request(current_state, uuid, request)
     {:reply, {:ok, uuid}, current_state}
   end
 

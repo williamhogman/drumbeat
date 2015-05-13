@@ -17,14 +17,15 @@ defmodule Drumbeat.Web do
 
   get "/pow" do
     uuid = UUID.uuid4()
-    request = %Drumbeat.Request{url: 'http://httpbin.org',
+    request = %Drumbeat.Request{url: 'http://httpbin.org/status/200',
                                 headers: [],
                                 respond_to: Drumbeat.Request.message_sink(self() ),
                                }
     Drumbeat.Dispatch
     |> Drumbeat.Dispatch.place_request(uuid, request)
 
+    IO.inspect(await_response(uuid))
     conn
-    |> text(await_response(uuid))
+    |> text('ok')
   end
 end
