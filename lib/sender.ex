@@ -13,10 +13,19 @@ defmodule Drumbeat.Sender do
   ) do
     {:http_uuid_response, headers, body}
   end
+
+  defp attempt_request(
+    %Drumbeat.Request{url: {:message_sink, pid}, body: body, headers: headers}
+  ) do
+    pid ! {:http_response, {body, headers}}
+    {:done, headers, body}
+  end
+
   defp attempt_request(%Drumbeat.Request{headers: headers, url: url}, opts) do
     %HTTPotion.Response{ headers: headers, body: body} = HTTPotion.get(url, headers)
     {:done, headers, body}
   end
+
 
   defp loop(dispatch, uuid, request, opts, _state) do
     case attempt_request(request, opts) do

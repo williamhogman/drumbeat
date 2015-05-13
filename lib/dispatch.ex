@@ -6,10 +6,13 @@ defmodule Drumbeat.Request do
     |> Dict.put_new(:headers, headers)
   end
 
-  def from_template(t) when is_nil(t)  do
-    %Drumbeat.Request{url: :http_uuid_response}
-  end
+
   def from_template(t) when is_map(t), do: t
+  def message_sink(pid) do
+    %Drumbeat.Request{
+                 url: {:message_sink, pid}
+             }
+  end
 
 end
 defmodule Drumbeat.Dispatch do
