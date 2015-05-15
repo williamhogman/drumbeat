@@ -31,7 +31,8 @@ defmodule Drumbeat.Mixfile do
         {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.1"},
         {:httpotion, "~> 2.0.0"},
         {:clint, github: "lpil/clint"},
-        { :uuid, "~> 1.0" },
+        {:uuid, "~> 1.0" },
+        {:poison, "~> 1.4"},
     ]
   end
 end

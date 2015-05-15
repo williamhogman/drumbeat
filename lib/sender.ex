@@ -7,18 +7,27 @@ defmodule Drumbeat.Sender do
     {:ok, pid}
   end
 
+  defp http_req(url, nil) do
+    IO.inspect(url)
+    HTTPotion.get(url)
+  end
+  defp http_req(url, headers) do
+    IO.inspect({url, headers})
+    HTTPotion.get(url, headers)
+  end
+
   defp attempt_request(
     %Drumbeat.Request{url: {:message_sink, pid}, body: body, headers: headers}, opts
   ) do
-    send pid, {:http_response, {body, headers}}
+    send pid, {:http_response, {headers, body}}
     {:done, headers, body}
   end
   defp attempt_request(%Drumbeat.Request{headers: headers, url: url}, opts) when is_list(url) or is_binary(url) do
-    %HTTPotion.Response{ headers: headers, body: body} = HTTPotion.get(url, headers)
+
+    %HTTPotion.Response{ headers: headers, body: body} = http_req(url, headers)
     {:done, headers, body}
   end
   defp loop(dispatch, uuid, request, opts, _state) do
-    IO.inspect(request)
     case attempt_request(request, opts) do
       {:done, headers, body} ->
         Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})

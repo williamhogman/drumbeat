@@ -5,4 +5,5 @@ defmodule Drumbeat do
     Drumbeat.Web.start
     {:ok, pid}
   end
+  def start, do: start(nil, nil)
 end
