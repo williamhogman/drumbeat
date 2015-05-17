@@ -1,3 +1,10 @@
+defmodule Drumbeat.Parser do
+  def parse_json(nil), do: nil
+  def parse_json(data), do: Poison.decode!(data, as: Drumbeat.Request)
+
+  def parse_sink(nil), do: :local
+  def parse_sink("local"), do: :local
+end
 defmodule Drumbeat.Web do
   use Clint
 
@@ -27,30 +34,23 @@ defmodule Drumbeat.Web do
     end
   end
 
-  defp parse_sink(nil), do: :local
-  defp parse_sink("local"), do: :local
-
   defp create_sink_node(conn) do
-    case conn |> first_header("x-sink-to") |> parse_sink do
+    case conn |> first_header("x-sink-to") |> Drumbeat.Parser.parse_sink do
       :local -> Drumbeat.Request.message_sink(self())
     end
   end
-
-  defp parse_json_request(nil), do: nil
-  defp parse_json_request(data), do: Poison.decode!(data, as: Drumbeat.Request)
-
   defp out_json(conn, status_code, data) do
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(status_code, data)
   end
-
   get "/json" do
     uuid = UUID.uuid4()
     sink = create_sink_node(conn)
     request = conn
     |> first_header("x-request")
-    |> parse_json_request
+    |> Drumbeat.Parser.parse_json
+    |> Drumbeat.Request.rewrite_urls(:sender_pid, self())
     |> Drumbeat.Request.add_terminal_node(sink)
     IO.inspect(request)
 
