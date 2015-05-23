@@ -1,9 +1,5 @@
 defmodule Drumbeat.Sender.HTTP do
-  def request(url, nil) do
-    IO.inspect(url)
-    resp = HTTPotion.get(url)
-    {resp.headers, resp.body}
-  end
+  def request(url, nil), do: request(url, [])
   def request(url, headers) do
     resp = HTTPotion.get(url, headers)
     {resp.headers, resp.body}
