@@ -23,15 +23,12 @@ defmodule Drumbeat.Sender do
     {:done, headers, body}
   end
   defp attempt_request(%Drumbeat.Request{headers: headers, url: url}, opts) when is_list(url) or is_binary(url) do
-
-    %HTTPotion.Response{ headers: headers, body: body} = http_req(url, headers)
-    {:done, headers, body}
+    %HTTPotion.Response{ headers: response_headers, body: body} = http_req(url, headers)
+    {:done, response_headers, body}
   end
   defp loop(dispatch, uuid, request, opts, _state) do
     case attempt_request(request, opts) do
       {:done, headers, body} ->
-        Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})
-      {:http_uuid_response, headers, body} ->
         Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})
     end
   end
