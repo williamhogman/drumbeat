@@ -1,8 +1,21 @@
 defmodule Drumbeat.Sender.HTTP do
+
+  defp decode_if_possible data do
+    case Poison.decode data do
+      {:ok, decoded} -> decoded
+      {:error, _x} -> data
+    end
+  end
+
   def request(url, nil), do: request(url, [])
   def request(url, headers) do
     resp = HTTPotion.get(url, headers)
-    {resp.headers, resp.body}
+    IO.inspect(Keyword.get(resp.headers, :"Content-Type"))
+    decoded_body = case Keyword.get(resp.headers, :"Content-Type") do
+                     "application/json" -> decode_if_possible(resp.body)
+                     _ -> resp.body
+                   end
+    {resp.headers, decoded_body}
   end
 end
 
@@ -14,7 +27,6 @@ defmodule Drumbeat.Sender do
     pid = spawn_link(Drumbeat.Sender, :init, [dispatch, uuid, request])
     {:ok, pid}
   end
-
 
   defp attempt_request(
     %Drumbeat.Request{url: {:message_sink, pid}, body: body, headers: headers}, opts
