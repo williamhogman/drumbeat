@@ -44,15 +44,19 @@ defmodule Drumbeat.Web do
     |> put_resp_content_type("application/json")
     |> send_resp(status_code, data)
   end
-  get "/json" do
-    uuid = UUID.uuid4()
-    sink = create_sink_node(conn)
-    request = conn
+
+  defp build_request(sink, conn) do
+    conn
     |> first_header("x-request")
     |> Drumbeat.Parser.parse_json
     |> Drumbeat.Request.rewrite_urls(:sender_pid, self())
     |> Drumbeat.Request.add_terminal_node(sink)
-    IO.inspect(request)
+  end
+
+  get "/json" do
+    uuid = UUID.uuid4()
+    sink = create_sink_node(conn)
+    request = build_request(sink, conn)
 
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, request)
     {:ok, {headers, body}} = await_response(uuid)

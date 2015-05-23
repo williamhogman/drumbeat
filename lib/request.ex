@@ -1,8 +1,6 @@
 defmodule Drumbeat.Request do
   defstruct url: nil, respond_to: nil, body: nil, headers: nil
-  def successor(%Drumbeat.Request{respond_to: :end}, headers, body) do
-    :end
-  end
+  def successor(%Drumbeat.Request{respond_to: :end}, _, _), do: :end
   def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
     Drumbeat.Request.from_template(respond_to)
     |> put_smart(:body, body)
@@ -33,10 +31,6 @@ defmodule Drumbeat.Request do
     IO.inspect(child)
     new = Map.put(req, :respond_to, child)
     f.(new)
-  end
-  def visit_request(x, y) do
-    IO.inspect(x)
-    IO.inspect(y)
   end
 
   defp put_smart(map, _key, nil), do: map
