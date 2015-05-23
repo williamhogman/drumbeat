@@ -2,7 +2,7 @@ import pprint
 import requests
 import json
 
-foo = json.dumps(dict(url='http://httpbin.org/get'))
+foo = json.dumps(dict(url='http://httpbin.org/get', method='get'))
 
 headers  = {
 	'X-Request': foo

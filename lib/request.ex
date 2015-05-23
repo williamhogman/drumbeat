@@ -1,5 +1,5 @@
 defmodule Drumbeat.Request do
-  defstruct url: nil, respond_to: nil, body: nil, headers: nil
+  defstruct url: nil, respond_to: nil, body: nil, headers: nil, method: nil
   def successor(%Drumbeat.Request{respond_to: :end}, _, _), do: :end
   def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
     Drumbeat.Request.from_template(respond_to)
@@ -60,9 +60,19 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   end
   defp decode_url(x), do: x
 
+  def decode_method(nil), do: nil
+  def decode_method(""), do: nil
+  def decode_method("get"), do: :get
+  def decode_method("head"), do: :head
+  def decode_method("post"), do: :post
+  def decode_method("put"), do: :put
+  def decode_method(x) when is_binary(x), do: String.downcase(x)
+
+
   def decode(value, _options) do
     value
     |> Map.put(:respond_to, decode_respond_to(value.respond_to))
     |> Map.put(:url, decode_url(value.url))
+    |> Map.put(:method, decode_method(value.method))
   end
 end

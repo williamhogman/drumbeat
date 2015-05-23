@@ -7,10 +7,8 @@ defmodule Drumbeat.Sender.HTTP do
     end
   end
 
-  def request(url, nil), do: request(url, [])
-  def request(url, headers) do
-    resp = HTTPotion.get(url, headers)
-    IO.inspect(Keyword.get(resp.headers, :"Content-Type"))
+  def request(method, url, headers) do
+    resp = HTTPotion.request(method || :get, url, headers || [])
     decoded_body = case Keyword.get(resp.headers, :"Content-Type") do
                      "application/json" -> decode_if_possible(resp.body)
                      _ -> resp.body
@@ -34,8 +32,8 @@ defmodule Drumbeat.Sender do
     send pid, {:http_response, {headers, body}}
     {:done, headers, body}
   end
-  defp attempt_request(%Drumbeat.Request{headers: headers, url: url}, opts) when is_list(url) or is_binary(url) do
-    {response_headers, response_body} = Drumbeat.Sender.HTTP.request(url, headers)
+  defp attempt_request(%Drumbeat.Request{headers: headers, url: url, method: method}, opts) when is_list(url) or is_binary(url) do
+    {response_headers, response_body} = Drumbeat.Sender.HTTP.request(method, url, headers)
     {:done, response_headers, response_body}
   end
   defp loop(dispatch, uuid, request, opts, _state) do
