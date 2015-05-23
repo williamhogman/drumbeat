@@ -28,7 +28,6 @@ defmodule Drumbeat.Request do
   def visit_requests(req, f) when is_map(req) and is_function(f) do
     respond_to = req.respond_to
     child = visit_requests(respond_to, f)
-    IO.inspect(child)
     new = Map.put(req, :respond_to, child)
     f.(new)
   end

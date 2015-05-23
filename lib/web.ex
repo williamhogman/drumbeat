@@ -53,15 +53,22 @@ defmodule Drumbeat.Web do
     |> Drumbeat.Request.add_terminal_node(sink)
   end
 
+  def send_response(conn, uuid) do
+    case await_response(uuid) do
+      {:ok, {headers, body}} ->
+        {:ok, data} = Poison.encode(%{headers: Enum.into(headers, %{}), body: body})
+        out_json(conn, 200, data)
+      {:error, :timeout} ->
+        out_json(conn, 500, %{error: :timeout})
+    end
+  end
+
   get "/json" do
     uuid = UUID.uuid4()
     sink = create_sink_node(conn)
     request = build_request(sink, conn)
 
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, request)
-    {:ok, {headers, body}} = await_response(uuid)
-
-    {:ok, data} = Poison.encode(%{headers: Enum.into(headers, %{}), body: body})
-    out_json(conn, 200, data)
+    send_response(conn, uuid)
   end
 end
