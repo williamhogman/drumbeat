@@ -7,13 +7,13 @@ defmodule Drumbeat.URL do
 
   def url("sender_pid"), do: :sender_pid
 
-  def rewrite(x, x, y) when is_binary(x), do: y
-  def rewrite(x, _, _) when is_binary(x), do: x
-  def rewrite(from, from, to), do: to
   def rewrite(%Drumbeat.URL{url: from} = x, from, to) do
     %{x | url: to}
   end
-  def rewrite(X, _From, _To), do: X
+  def rewrite(from, from, to), do: to
+  def rewrite(x, _from, _to), do: x
+
+  def from_text(x), do: %Drumbeat.URL{url: x}
 end
 
 defimpl Poison.Decoder, for: Drumbeat.URL do

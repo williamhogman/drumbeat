@@ -43,8 +43,11 @@ defmodule Drumbeat.Sender do
     send pid, {:http_response, req}
     {:done, req.headers, req.body}
   end
-  defp attempt_request(%Drumbeat.Request{url: url} = req, opts) when is_list(url) or is_binary(url) do
-    {response_headers, response_body} = Drumbeat.Sender.HTTP.request(req.method, url, req.headers, req.body)
+  defp attempt_request(
+    %Drumbeat.Request{url: %Drumbeat.URL{type: http, url: url}} = req, opts
+  ) do
+    {response_headers, response_body} =
+      Drumbeat.Sender.HTTP.request(req.method, url, req.headers, req.body)
     {:done, response_headers, response_body}
   end
   defp loop(dispatch, uuid, request, opts, _state) do

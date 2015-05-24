@@ -58,7 +58,11 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   defp decode_url(x) when is_map(x) do
     Poison.Decoder.decode(x, as: Drumbeat.URL)
   end
-  defp decode_url(x), do: x
+  defp decode_url(x) when is_binary(x) or is_list(x) do
+    Drumbeat.URL.from_text(x)
+  end
+  defp decode_url(nil), do: nil
+
 
   def decode_method(nil), do: nil
   def decode_method(""), do: nil
