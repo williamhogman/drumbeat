@@ -1,4 +1,5 @@
 defmodule Drumbeat.Sender.HTTP do
+  @timeout 10000
 
   defp decode_if_possible data do
     case Poison.decode data do
@@ -7,8 +8,21 @@ defmodule Drumbeat.Sender.HTTP do
     end
   end
 
-  def request(method, url, headers) do
-    resp = HTTPotion.request(method || :get, url, headers || [])
+  defp preproces_body(body) when is_map(body) do
+    case Poison.encode body do
+      {:ok, body} -> body
+    end
+  end
+  defp preproces_body(body), do: body
+
+  def request(method, url, headers, body) do
+    IO.inspect(preproces_body(body))
+    resp = HTTPotion.request(method || :get, url,
+                             headers: headers || [],
+                             body: preproces_body(body),
+                             timeout: @timeout
+    )
+
     decoded_body = case Keyword.get(resp.headers, :"Content-Type") do
                      "application/json" -> decode_if_possible(resp.body)
                      _ -> resp.body
@@ -18,8 +32,6 @@ defmodule Drumbeat.Sender.HTTP do
 end
 
 defmodule Drumbeat.Sender do
-  @timeout 10000
-  @connect_timeout 5000
 
   def start_link(dispatch, uuid, request) do
     pid = spawn_link(Drumbeat.Sender, :init, [dispatch, uuid, request])
@@ -32,8 +44,8 @@ defmodule Drumbeat.Sender do
     send pid, {:http_response, req}
     {:done, req.headers, req.body}
   end
-  defp attempt_request(%Drumbeat.Request{headers: headers, url: url, method: method}, opts) when is_list(url) or is_binary(url) do
-    {response_headers, response_body} = Drumbeat.Sender.HTTP.request(method, url, headers)
+  defp attempt_request(%Drumbeat.Request{url: url} = req, opts) when is_list(url) or is_binary(url) do
+    {response_headers, response_body} = Drumbeat.Sender.HTTP.request(req.method, url, req.headers, req.body)
     {:done, response_headers, response_body}
   end
   defp loop(dispatch, uuid, request, opts, _state) do
