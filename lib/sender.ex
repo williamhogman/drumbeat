@@ -16,7 +16,6 @@ defmodule Drumbeat.Sender.HTTP do
   defp preproces_body(body), do: body
 
   def request(method, url, headers, body) do
-    IO.inspect(preproces_body(body))
     resp = HTTPotion.request(method || :get, url,
                              headers: headers || [],
                              body: preproces_body(body),
@@ -39,7 +38,7 @@ defmodule Drumbeat.Sender do
   end
 
   defp attempt_request(
-    %Drumbeat.Request{url: {:message_sink, pid}} = req, opts
+    %Drumbeat.Request{url: %Drumbeat.URL{type: :message_sink, url: pid}} = req, opts
   ) do
     send pid, {:http_response, req}
     {:done, req.headers, req.body}
