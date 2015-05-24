@@ -27,10 +27,10 @@ defmodule Drumbeat.Sender do
   end
 
   defp attempt_request(
-    %Drumbeat.Request{url: {:message_sink, pid}, body: body, headers: headers}, opts
+    %Drumbeat.Request{url: {:message_sink, pid}} = req, opts
   ) do
-    send pid, {:http_response, {headers, body}}
-    {:done, headers, body}
+    send pid, {:http_response, req}
+    {:done, req.headers, req.body}
   end
   defp attempt_request(%Drumbeat.Request{headers: headers, url: url, method: method}, opts) when is_list(url) or is_binary(url) do
     {response_headers, response_body} = Drumbeat.Sender.HTTP.request(method, url, headers)

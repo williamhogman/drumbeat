@@ -55,8 +55,8 @@ defmodule Drumbeat.Web do
 
   def send_response(conn, uuid) do
     case await_response(uuid) do
-      {:ok, {headers, body}} ->
-        {:ok, data} = Poison.encode(%{headers: Enum.into(headers, %{}), body: body})
+      {:ok, resp} ->
+        {:ok, data} = Poison.encode(%{headers: Enum.into(resp.headers, %{}), body: resp.body})
         out_json(conn, 200, data)
       {:error, :timeout} ->
         out_json(conn, 500, %{error: :timeout})
