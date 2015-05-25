@@ -8,6 +8,13 @@ defmodule Drumbeat.Sender.HTTP do
     end
   end
 
+  def decode_response_body resp do
+    case Keyword.get(resp.headers, :"Content-Type") do
+      "application/json" -> decode_if_possible(resp.body)
+      _ -> resp.body
+    end
+  end
+
   defp preproces_body(body) when is_map(body) do
     case Poison.encode body do
       {:ok, body} -> body
@@ -21,12 +28,8 @@ defmodule Drumbeat.Sender.HTTP do
                              body: preproces_body(body),
                              timeout: @timeout
     )
-
-    decoded_body = case Keyword.get(resp.headers, :"Content-Type") do
-                     "application/json" -> decode_if_possible(resp.body)
-                     _ -> resp.body
-                   end
-    {resp.headers, decoded_body}
+    %Drumbeat.Request{headers: resp.headers,
+                      body: decode_response_body(resp)}
   end
 end
 
@@ -37,27 +40,26 @@ defmodule Drumbeat.Sender do
     {:ok, pid}
   end
 
-  defp attempt_request(
-    %Drumbeat.Request{url: %Drumbeat.URL{type: :message_sink, url: pid}} = req, opts
-  ) do
-    send pid, {:http_response, req}
-    {:done, req.headers, req.body}
+  defp attempt_request(req) do
+
+    case req.url.type do
+      :http ->
+        Drumbeat.Sender.HTTP.request(req.method, req.url.url, req.headers, req.body)
+      :message_sink ->
+        send req.url.url, {:http_response, req}
+        req
+    end
   end
-  defp attempt_request(
-    %Drumbeat.Request{url: %Drumbeat.URL{type: http, url: url}} = req, opts
-  ) do
-    {response_headers, response_body} =
-      Drumbeat.Sender.HTTP.request(req.method, url, req.headers, req.body)
-    {:done, response_headers, response_body}
-  end
-  defp loop(dispatch, uuid, request, opts, _state) do
-    case attempt_request(request, opts) do
-      {:done, headers, body} ->
+
+  defp loop(dispatch, uuid, request) do
+    case attempt_request(request) do
+      %Drumbeat.Request{headers: headers, body: body} ->
+
         Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})
     end
   end
 
   def init(dispatch, uuid, request) do
-    loop(dispatch, uuid, request, [], nil)
+    loop(dispatch, uuid, request)
   end
 end
