@@ -39,10 +39,15 @@ defmodule Drumbeat.Web do
       :local -> Drumbeat.Request.message_sink(self())
     end
   end
-  defp out_json(conn, status_code, data) do
-    conn
-    |> put_resp_content_type("application/json")
-    |> send_resp(status_code, data)
+
+  def write_request(conn, req) do
+    Enum.reduce req.headers, conn, fn {k, v}, acc -> put_resp_header(acc, k, v) end
+    |> resp(:ok, case req.body do
+                        x when is_map(x) ->
+                          {:ok, data} = Poison.encode(%{headers: Enum.into(x.headers, %{}), body: x.body})
+                          data
+                      end)
+    |> send_resp
   end
 
   defp build_request(sink, conn) do
@@ -56,8 +61,9 @@ defmodule Drumbeat.Web do
   def send_response(conn, uuid) do
     case await_response(uuid) do
       {:ok, resp} ->
-        {:ok, data} = Poison.encode(%{headers: Enum.into(resp.headers, %{}), body: resp.body})
-        out_json(conn, 200, data)
+        # {:ok, data} = Poison.encode(%{headers: Enum.into(resp.headers, %{}), body: resp.body})
+        #out_json(conn, 200, data)
+        write_request(conn, %Drumbeat.Request{body: resp, headers: [] })
       {:error, :timeout} ->
         out_json(conn, 500, %{error: :timeout})
     end
