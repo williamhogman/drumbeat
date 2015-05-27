@@ -1,9 +1,6 @@
 defmodule Drumbeat.Parser do
   def parse_json(nil), do: nil
   def parse_json(data), do: Poison.decode!(data, as: Drumbeat.Request)
-
-  def parse_sink(nil), do: :local
-  def parse_sink("local"), do: :local
 end
 defmodule Drumbeat.Web do
   use Clint
@@ -21,12 +18,6 @@ defmodule Drumbeat.Web do
     case get_req_header(conn, header) do
       [x|_tail] -> x
       [] -> nil
-    end
-  end
-
-  defp create_sink_node(conn) do
-    case conn |> first_header("x-sink-to") |> Drumbeat.Parser.parse_sink do
-      :local -> Drumbeat.Request.message_sink(self())
     end
   end
 
@@ -48,13 +39,13 @@ defmodule Drumbeat.Web do
     |> send_resp
   end
 
-  defp build_request(sink, conn) do
+  defp build_request(conn) do
     conn
     |> first_header("x-request")
     |> Drumbeat.Parser.parse_json
     |> Drumbeat.Request.rewrite_urls(:sender_pid, self())
-    |> Drumbeat.Request.add_terminal_node(%Drumbeat.Request{url: %Drumbeat.URL{type: :quote}})
-    |> Drumbeat.Request.add_terminal_node(sink)
+    |> Drumbeat.Request.add_terminal_node(Drumbeat.Request.quote_req)
+    |> Drumbeat.Request.add_terminal_node(Drumbeat.Request.message_sink)
   end
 
   def send_response(conn, uuid) do
@@ -66,8 +57,7 @@ defmodule Drumbeat.Web do
 
   get "/json" do
     uuid = UUID.uuid4()
-    sink = create_sink_node(conn)
-    request = build_request(sink, conn)
+    request = build_request(conn)
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, request)
     send_response(conn, uuid)
   end

@@ -42,9 +42,13 @@ defmodule Drumbeat.Request do
 
   def from_template(t) when is_map(t), do: t
   def message_sink(pid) do
-    %Drumbeat.Request{
-                 url: %Drumbeat.URL{type: :message_sink, url: pid},
-             }
+    %Drumbeat.Request{url: %Drumbeat.URL{type: :message_sink, url: pid}}
+  end
+  def message_sink do
+    message_sink(self())
+  end
+  def quote_req do
+    %Drumbeat.Request{url: %Drumbeat.URL{type: :quote}}
   end
 end
 
