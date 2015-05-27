@@ -3,17 +3,19 @@ defmodule Drumbeat.URL do
   def type(nil), do: :http
   def type("http"), do: :http
   def type("message_sink"), do: :message_sink
+  def type("quote"), do: :quote
   def type(x) when is_atom(x), do: x
 
+
   def url("sender_pid"), do: :sender_pid
+  def url(x), do: x
 
   def rewrite(%Drumbeat.URL{url: from} = x, from, to) do
     %{x | url: to}
   end
   def rewrite(from, from, to), do: to
   def rewrite(x, _from, _to), do: x
-
-  def from_text(x), do: %Drumbeat.URL{url: x}
+  def from_text(x), do: %Drumbeat.URL{url: url(x), type: type(nil)}
 end
 
 defimpl Poison.Decoder, for: Drumbeat.URL do

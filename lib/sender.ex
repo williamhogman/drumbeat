@@ -48,13 +48,14 @@ defmodule Drumbeat.Sender do
       :message_sink ->
         send req.url.url, {:http_response, req}
         req
+      :quote ->
+        %Drumbeat.Request{body: req, headers: []}
     end
   end
 
   defp loop(dispatch, uuid, request) do
     case attempt_request(request) do
       %Drumbeat.Request{headers: headers, body: body} ->
-
         Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})
     end
   end

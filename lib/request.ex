@@ -1,6 +1,6 @@
 defmodule Drumbeat.Request do
   defstruct url: nil, respond_to: nil, body: nil, headers: nil, method: nil
-  def successor(%Drumbeat.Request{respond_to: :end}, _, _), do: :end
+  def successor(%Drumbeat.Request{respond_to: nil}, _, _), do: nil
   def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
     Drumbeat.Request.from_template(respond_to)
     |> put_smart(:body, body)
@@ -44,7 +44,6 @@ defmodule Drumbeat.Request do
   def message_sink(pid) do
     %Drumbeat.Request{
                  url: %Drumbeat.URL{type: :message_sink, url: pid},
-                 respond_to: :end,
              }
   end
 end
@@ -78,5 +77,11 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
     |> Map.put(:respond_to, decode_respond_to(value.respond_to))
     |> Map.put(:url, decode_url(value.url))
     |> Map.put(:method, decode_method(value.method))
+  end
+end
+
+defimpl Poison.Encoder, for: Drumbeat.Request do
+  def encode(req, _opts) do
+    Poison.encode!(%{headers: Enum.into(req.headers, %{}), body: req.body})
   end
 end

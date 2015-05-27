@@ -17,16 +17,6 @@ defmodule Drumbeat.Web do
     end
   end
 
-  get "/status" do
-    conn
-    |> text('drumbeat')
-  end
-
-  get "/favicon.ico" do
-    conn
-    |> text('no')
-  end
-
   defp first_header(conn, header) do
     case get_req_header(conn, header) do
       [x|_tail] -> x
@@ -40,13 +30,21 @@ defmodule Drumbeat.Web do
     end
   end
 
+  def write_headers(conn, []), do: conn
+  def write_headers(conn, headers) do
+
+    Enum.reduce headers, conn, fn
+      {"Content-Length", _}, acc -> acc
+      {k, v}, acc ->
+        put_resp_header(acc, to_string(k), v)
+    end
+  end
+
   def write_request(conn, req) do
-    Enum.reduce req.headers, conn, fn {k, v}, acc -> put_resp_header(acc, k, v) end
+    write_headers(conn, req.headers)
     |> resp(:ok, case req.body do
-                        x when is_map(x) ->
-                          {:ok, data} = Poison.encode(%{headers: Enum.into(x.headers, %{}), body: x.body})
-                          data
-                      end)
+                   x when is_map(x) -> Poison.encode!(x)
+                 end)
     |> send_resp
   end
 
@@ -55,17 +53,14 @@ defmodule Drumbeat.Web do
     |> first_header("x-request")
     |> Drumbeat.Parser.parse_json
     |> Drumbeat.Request.rewrite_urls(:sender_pid, self())
+    |> Drumbeat.Request.add_terminal_node(%Drumbeat.Request{url: %Drumbeat.URL{type: :quote}})
     |> Drumbeat.Request.add_terminal_node(sink)
   end
 
   def send_response(conn, uuid) do
     case await_response(uuid) do
-      {:ok, resp} ->
-        # {:ok, data} = Poison.encode(%{headers: Enum.into(resp.headers, %{}), body: resp.body})
-        #out_json(conn, 200, data)
-        write_request(conn, %Drumbeat.Request{body: resp, headers: [] })
-      {:error, :timeout} ->
-        out_json(conn, 500, %{error: :timeout})
+      {:ok, resp} -> write_request(conn, resp)
+      {:error, :timeout} -> send_resp(conn, 500, Posion.encode(%{error: :timeout}))
     end
   end
 
@@ -73,7 +68,6 @@ defmodule Drumbeat.Web do
     uuid = UUID.uuid4()
     sink = create_sink_node(conn)
     request = build_request(sink, conn)
-
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, request)
     send_response(conn, uuid)
   end
