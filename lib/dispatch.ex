@@ -45,9 +45,9 @@ defmodule Drumbeat.Dispatch do
     {:noreply, state(current_state, pool: pool)}
   end
 
-  def handle_cast({:report_response, {uuid, headers, body}}, current_state) do
+  def handle_cast({:report_response, {uuid, resp}}, current_state) do
     {:ok, request} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
-    case Drumbeat.Request.successor(request, headers, body) do
+    case Drumbeat.Request.successor(request, resp.headers, resp.body) do
       nil -> :ok
       successor -> internal_place_request(current_state, uuid, successor)
     end

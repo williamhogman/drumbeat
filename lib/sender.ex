@@ -55,8 +55,8 @@ defmodule Drumbeat.Sender do
 
   defp loop(dispatch, uuid, request) do
     case attempt_request(request) do
-      %Drumbeat.Request{headers: headers, body: body} ->
-        Drumbeat.Dispatch.report_response(dispatch, {uuid, headers, body})
+      %Drumbeat.Request{} = req ->
+        Drumbeat.Dispatch.report_response(dispatch, {uuid, req})
     end
   end
 
