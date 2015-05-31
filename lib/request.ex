@@ -66,7 +66,6 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   end
   defp decode_url(nil), do: nil
 
-
   def decode_method(nil), do: nil
   def decode_method(""), do: nil
   def decode_method("get"), do: :get
@@ -74,7 +73,6 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   def decode_method("post"), do: :post
   def decode_method("put"), do: :put
   def decode_method(x) when is_binary(x), do: String.downcase(x)
-
 
   def decode(value, _options) do
     value

@@ -18,17 +18,21 @@ defmodule Drumbeat.Web do
     |> send_resp
   end
 
-  defp send_response(conn, uuid) do
-    case await_response(uuid) do
-      {:ok, resp} -> write_request(conn, resp)
-      {:error, :timeout} -> send_resp(conn, 500, Posion.encode(%{error: :timeout}))
-    end
+  defp send_response(conn, {:ok, resp}) do
+    write_request(conn, resp)
+  end
+  defp send_response(conn, {:error, :timeout}) do
+    send_resp(conn, 500, Posion.encode(%{error: :timeout}))
   end
 
-  get "/json" do
-    {new_conn, body} = read_full_body!(conn)
+  defp perform_request(body) do
     uuid = UUID.uuid4()
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, Drumbeat.Parser.parse_and_decorate(body))
-    send_response(new_conn, uuid)
+    await_response(uuid)
+  end
+
+  match "/*_path" do
+    {new_conn, body} = read_full_body!(conn)
+    send_response(conn, perform_request(body))
   end
 end
