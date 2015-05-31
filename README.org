@@ -1,0 +1,72 @@
+#+TITLE: Drumbeat
+
+Drumbeat is a generalization of the HTTP protocol. It uses a number of
+primitives and utilizes emergent properties of these to solve common
+HTTP use-cases. Primarily, it allows for the specification of
+succession of HTTP requests, stemming from a single request.
+
+* Generalizing HTTP
+  HTTP is essance a very simple protocol, a HTTP Request can be
+  described by a tuple of the form $\{ m, u, h, b \}$ where the
+  methods, $m \in M$, $M$ is a set of methods varying based on the
+  version and possible extensions used, $u$ the url of the resource,
+  $h$, headers an ordered list, $b$ a body of arbitrary length.
+
+  Almost entirely similar is the HTTP response which can be described
+  by the tuple $\{ s, m, h, b \}$ with $h$ and be taken on the same
+  meaning as in the request. $s \in \{ x \mid x \in \mathbb{N}, 99 < x
+  < 1000 \}$. $m$ is the status line message, a string of non newline
+  characters. In practice, $m$ is never used for progrmatic purposes
+  and a de-facto one to one relationship between the status code and
+  message exists. Therefore for a large fraction of use-cases, $\{s,
+  h, b}\$ provides a sufficiently accrurate model.
+
+  Going beyond this model we observe status codes are often used for
+  flow control rather than data. Indeed, status codes are divided up
+  into 2XX denoting success, 3XX redirection, 4xx client error and 5xx
+  server error, with different status-codes having different retry
+  characteristics. If the concern of retrying and following redirects
+  and caching is separated from that of data-processing, then there
+  are exceedingly few cases where direct inspection of the status code
+  is required. This allows for a response to be specified simply as
+  the tuple \${ h, b \}$.
+
+  It seems unresonable however to reduce the methods in a similar way
+  as many APIs use methods to communicate semantic intent. Instead
+  I've opted allow for an unspecified value, nil, value for
+  responses. When a method is left unspecified in a request, nil
+  values are converted to GET. This choice was made as GET is the most
+  often used method in the HTTP protocol and seldom causes changes to
+  remote server.
+
+  By following these two rules HTTP requests and responses can be
+  represented as tuples $\{ m, b, h \}$, where in this model M
+  contains a specical nil element. This structure allows a HTTP
+  response to be used as a request and vice-versa.
+
+* Request successors
+  One of the goals with drumbeat is to allow for a succession of
+  requests to by set in motion from a single request. For example, the
+  sequence fetch a resource from some URL and PUT into onto another
+  resources may be useful in a number of server settings. Particularly
+  in environments in which asyncronous requests are impossible having
+  a service provide asyncrony may be useful in for example a web
+  spider.
+
+  To accomodate this a field called respond_to was added. Upon the
+  completion of request, the response of that request and the value of
+  respond_to are combined into a successor request which is
+  immediately placed. As each request may have a successor this
+  processes is executed recursivly until a null value is reached.
+
+  To become truely useful, a number of atomic operations (not in the
+  concurrency sense) need to be added. Firstly, a quote operation
+  which turns a http request into a Map representation (which is
+  implicitly serialized as JSON when used in a request). This
+  operation could trivially be implemented in a separate service
+  although is made internal to avoid IO costs. The converse of the
+  transition this transition, eval, parses a request having a body
+  consisting of map-representation of a request. (which could have been
+  implicitly deserialized from JSON)
+
+** Examples
