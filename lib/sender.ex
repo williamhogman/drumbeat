@@ -1,3 +1,4 @@
+alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Sender.HTTP do
   @timeout 10000
 
@@ -28,8 +29,8 @@ defmodule Drumbeat.Sender.HTTP do
                              body: preproces_body(body),
                              timeout: @timeout
     )
-    %Drumbeat.Request{headers: resp.headers,
-                      body: decode_response_body(resp)}
+    %Req{headers: resp.headers,
+         body: decode_response_body(resp)}
   end
 end
 
@@ -48,14 +49,14 @@ defmodule Drumbeat.Sender do
       :message_sink ->
         send req.url.url, {:http_response, req}
         req
-      :quote ->
-        %Drumbeat.Request{body: req, headers: []}
+      :quote -> %Req{body: req, headers: []}
+      :eval -> Drumbeat.Parser.parse(req.body)
     end
   end
 
   defp loop(dispatch, uuid, request) do
     case attempt_request(request) do
-      %Drumbeat.Request{} = req ->
+      %Req{} = req ->
         Drumbeat.Dispatch.report_response(dispatch, {uuid, req})
     end
   end

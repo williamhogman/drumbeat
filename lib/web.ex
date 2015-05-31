@@ -28,7 +28,7 @@ defmodule Drumbeat.Web do
   get "/json" do
     {new_conn, body} = read_full_body!(conn)
     uuid = UUID.uuid4()
-    Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, Drumbeat.Parser.parse(body))
+    Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, Drumbeat.Parser.parse_and_decorate(body))
     send_response(new_conn, uuid)
   end
 end
