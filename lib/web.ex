@@ -39,9 +39,23 @@ defmodule Drumbeat.Web do
     |> send_resp
   end
 
-  defp build_request(conn) do
-    conn
-    |> first_header("x-request")
+  def read_full_body!(conn) do
+    case read_full_body "", conn do
+      {:ok, new_conn, body} -> {new_conn, body}
+      {:error, e} -> raise e
+    end
+  end
+
+  def read_full_body(acc, conn) do
+    case read_body(conn) do
+      {:ok, body, new_conn} -> {:ok, new_conn, acc <> body}
+      {:more, body, new_conn} -> read_full_body(acc <> body, conn)
+      {:error, _} = e -> e
+    end
+  end
+
+  defp build_request(body) do
+    body
     |> Drumbeat.Parser.parse_json
     |> Drumbeat.Request.rewrite_urls(:sender_pid, self())
     |> Drumbeat.Request.add_terminal_node(Drumbeat.Request.quote_req)
@@ -56,9 +70,11 @@ defmodule Drumbeat.Web do
   end
 
   get "/json" do
+    {new_conn, body} = read_full_body!(conn)
+    request = build_request(body)
+
     uuid = UUID.uuid4()
-    request = build_request(conn)
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, request)
-    send_response(conn, uuid)
+    send_response(new_conn, uuid)
   end
 end
