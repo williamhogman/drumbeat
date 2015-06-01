@@ -16,21 +16,30 @@ defmodule Drumbeat.Sender.HTTP do
     end
   end
 
-  defp preproces_body(body) when is_map(body) do
+  defp preprocess_body(body) when is_map(body) do
     case Poison.encode body do
       {:ok, body} -> body
     end
   end
-  defp preproces_body(body), do: body
+
+  defp preprocess_body(nil), do: ""
+  defp preprocess_body(body), do: body
 
   def request(method, url, headers, body) do
-    resp = HTTPotion.request(method || :get, url,
-                             headers: headers || [],
-                             body: preproces_body(body),
-                             timeout: @timeout
-    )
-    %Req{headers: Enum.into(resp.headers, %{}),
-         body: decode_response_body(resp)}
+    try do
+      resp = HTTPotion.request(method || :get, url,
+                               headers: headers || [],
+                               body: preprocess_body(body),
+                               timeout: @timeout
+      )
+      %Req{headers: Enum.into(resp.headers, %{}),
+           body: decode_response_body(resp)}
+    rescue
+      e in HTTPotion.HTTPError ->
+        IO.inspect(e)
+        e
+    end
+
   end
 end
 
