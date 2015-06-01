@@ -25,3 +25,9 @@ defimpl Poison.Decoder, for: Drumbeat.URL do
     |> Map.put(:url, Drumbeat.URL.url(value.url))
   end
 end
+
+defimpl Poison.Encoder, for: PID do
+  def encode(value, opts) do
+    Poison.Encoder.encode("pid!", opts)
+  end
+end

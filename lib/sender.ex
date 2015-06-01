@@ -29,7 +29,7 @@ defmodule Drumbeat.Sender.HTTP do
                              body: preproces_body(body),
                              timeout: @timeout
     )
-    %Req{headers: resp.headers,
+    %Req{headers: Enum.into(resp.headers, %{}),
          body: decode_response_body(resp)}
   end
 end
@@ -42,7 +42,6 @@ defmodule Drumbeat.Sender do
   end
 
   defp attempt_request(req) do
-
     case req.url.type do
       :http ->
         Drumbeat.Sender.HTTP.request(req.method, req.url.url, req.headers, req.body)

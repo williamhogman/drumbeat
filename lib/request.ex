@@ -53,18 +53,22 @@ defmodule Drumbeat.Request do
 end
 
 defimpl Poison.Decoder, for: Drumbeat.Request do
-  defp decode_respond_to(nil), do: nil
-  defp decode_respond_to(x) do
-    Poison.Decoder.decode(x, as: Drumbeat.Request)
+  defp decode_url(x) when is_map(x) do
+    Poison.Decoder.decode(x, as: Drumbeat.URL, keys: :atoms!)
   end
 
-  defp decode_url(x) when is_map(x) do
-    Poison.Decoder.decode(x, as: Drumbeat.URL)
-  end
-  defp decode_url(x) when is_binary(x) or is_list(x) do
+  defp decode_url(x, _opts) when is_binary(x) or is_list(x) do
     Drumbeat.URL.from_text(x)
   end
-  defp decode_url(nil), do: nil
+  defp decode_url(nil, _options), do: %Drumbeat.URL{}
+  defp decode_url(value, options) do
+    struct = Drumbeat.URL.__struct__
+    Enum.into(Map.from_struct(struct), %{}, fn {key, default} ->
+      {key, Map.get(value, Atom.to_string(key), default)}
+    end)
+    |> Map.put(:__struct__, struct.__struct__)
+    |> decode_url(options)
+  end
 
   def decode_method(nil), do: nil
   def decode_method(""), do: nil
@@ -74,16 +78,21 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   def decode_method("put"), do: :put
   def decode_method(x) when is_binary(x), do: String.downcase(x)
 
-  def decode(value, _options) do
-    value
-    |> Map.put(:respond_to, decode_respond_to(value.respond_to))
-    |> Map.put(:url, decode_url(value.url))
-    |> Map.put(:method, decode_method(value.method))
+  defp decode_respond_to(nil, _), do: nil
+  defp decode_respond_to(value, options) do
+    struct = Drumbeat.Request.__struct__
+    Enum.into(Map.from_struct(struct), %{}, fn {key, default} ->
+      {key, Map.get(value, Atom.to_string(key), default)}
+    end)
+    |> Map.put(:__struct__, struct.__struct__)
+    |> decode(options)
   end
-end
 
-defimpl Poison.Encoder, for: Drumbeat.Request do
-  def encode(req, _opts) do
-    Poison.encode!(%{headers: Enum.into(req.headers, %{}), body: req.body})
+  def decode(nil, opts), do: nil
+  def decode(value, opts) do
+    value
+    |> Map.put(:respond_to, decode_respond_to(value.respond_to, opts))
+    |> Map.put(:url, decode_url(value.url, opts))
+    |> Map.put(:method, decode_method(value.method))
   end
 end

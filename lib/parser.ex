@@ -1,7 +1,7 @@
 alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Parser do
   defp parse_json(nil), do: nil
-  defp parse_json(data), do: Poison.decode!(data, as: Req)
+  defp parse_json(data), do: Poison.decode!(data, as: Drumbeat.Request, keys: :atoms)
   def parse(body) do
     body
     |> parse_json
