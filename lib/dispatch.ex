@@ -17,10 +17,6 @@ defmodule Drumbeat.Dispatch do
     GenServer.call(dispatch, {:place_request, uuid, request})
   end
 
-  def place_request(dispatch, request) do
-    place_request(dispatch, nil, request)
-  end
-
   def report_response(dispatch, uuid, resp) do
     GenServer.cast(dispatch, {:report_response, uuid, resp})
     :ok

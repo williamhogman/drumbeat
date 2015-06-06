@@ -2,7 +2,7 @@ defmodule Drumbeat.Web do
   use Drumbeat.WebHelpers
 
   @max_timeout 100_000_000
-  defp await_response(uuid, timeout \\ @max_timeout) do
+  defp await_response(timeout \\ @max_timeout) do
     receive do
       {:http_response, response} -> {:ok, response}
     after
@@ -26,9 +26,8 @@ defmodule Drumbeat.Web do
   end
 
   defp perform_request(body) do
-    uuid = UUID.uuid4()
-    Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, uuid, Drumbeat.Parser.parse_and_decorate(body))
-    await_response(uuid)
+    Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, UUID.uuid4(), Drumbeat.Parser.parse_and_decorate(body))
+    await_response()
   end
 
   match "/*_path" do
