@@ -10,11 +10,10 @@ defmodule Drumbeat.URL do
   def url("sender_pid"), do: :sender_pid
   def url(x), do: x
 
-  def rewrite(%Drumbeat.URL{url: from} = x, from, to) do
-    %{x | url: to}
-  end
+  def rewrite(%Drumbeat.URL{url: from} = x, from, to), do: %{x | url: to}
   def rewrite(from, from, to), do: to
   def rewrite(x, _from, _to), do: x
+
   def from_text(x), do: %Drumbeat.URL{url: url(x), type: type(nil)}
 end
 
