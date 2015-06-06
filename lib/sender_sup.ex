@@ -10,5 +10,5 @@ defmodule Drumbeat.SenderSup do
     :ok
   end
 
-  def start_link, do: start_link(max_restarts: 5, max_seconds: 3600, restart: transient)
+  def start_link, do: start_link(max_restarts: 5, max_seconds: 3600, restart: :transient)
 end
