@@ -21,8 +21,8 @@ defmodule Drumbeat.Dispatch do
     place_request(dispatch, nil, request)
   end
 
-  def report_response(dispatch, data) do
-    GenServer.cast(dispatch, {:report_response, data})
+  def report_response(dispatch, uuid, resp) do
+    GenServer.cast(dispatch, {:report_response, uuid, resp})
     :ok
   end
 
@@ -45,7 +45,7 @@ defmodule Drumbeat.Dispatch do
     {:noreply, state(current_state, pool: pool)}
   end
 
-  def handle_cast({:report_response, {uuid, resp}}, current_state) do
+  def handle_cast({:report_response, uuid, resp}, current_state) do
     {:ok, requests} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
     case requests do
       [_h|[]] -> :ok
