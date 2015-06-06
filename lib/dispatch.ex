@@ -33,40 +33,40 @@ defmodule Drumbeat.Dispatch do
     {:ok, %Drumbeat.Dispatch{registry: registry}}
   end
 
-  def handle_cast({:start_pool, pid}, current_state) do
+  def handle_cast({:start_pool, pid}, state) do
     pool = Drumbeat.DispatchSup.start_sender_pool(pid)
-    {:noreply, %Drumbeat.Dispatch{current_state | pool: pool}}
+    {:noreply, %Drumbeat.Dispatch{state | pool: pool}}
   end
 
-  def handle_cast({:report_response, uuid, resp}, current_state) do
-    {:ok, requests} = Drumbeat.Registry.remove_request(current_state.registry, uuid)
+  def handle_cast({:report_response, uuid, resp}, state) do
+    {:ok, requests} = Drumbeat.Registry.remove_request(state.registry, uuid)
     case requests do
       [_h|[]] -> :ok
       [_|[next|t]] ->
         successor = Drumbeat.Request.successor(resp, next)
-        internal_place_request(current_state, uuid, [successor|t])
+        internal_place_request(state, uuid, [successor|t])
     end
-    {:noreply, current_state}
+    {:noreply, state}
   end
 
-  defp internal_place_request(current_state, uuid, [req|_] = reqs) do
-    registry = current_state.registry
-    pool = current_state.pool
+  defp internal_place_request(state, uuid, [req|_] = reqs) do
+    registry = state.registry
+    pool = state.pool
     :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
     %Task{} = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
   end
 
 
   def handle_call({:place_request, uuid, request},
-                  _from, current_state) do
-    internal_place_request(current_state, uuid, request)
-    {:reply, {:ok, uuid}, current_state}
+                  _from, state) do
+    internal_place_request(state, uuid, request)
+    {:reply, {:ok, uuid}, state}
   end
 
-  def handle_call({:get_status, uuid}, _from, current_state) do
-    registry = current_state.registry
+  def handle_call({:get_status, uuid}, _from, state) do
+    registry = state.registry
     status = Drumbeat.Registry.has_request(registry, uuid)
-    {:reply, {:ok, status}, current_state}
+    {:reply, {:ok, status}, state}
   end
 
   def handle_call(:stop, _from, state) do
