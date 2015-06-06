@@ -14,8 +14,6 @@ defmodule Drumbeat.Dispatch do
   Places an HTTP request
   """
   def place_request(pid, uuid, request), do: call(pid, {:place_request, uuid, request})
-  def report_response(pid, uuid, resp), do: cast(pid, {:report_response, uuid, resp})
-
   def get_status(pid, uuid), do: call(pid, {:get_status, uuid})
 
   def stop(pid), do: call(pid, :stop)
@@ -31,21 +29,21 @@ defmodule Drumbeat.Dispatch do
     {:noreply, %Drumbeat.Dispatch{state | pool: pool}}
   end
 
-  def handle_cast({:report_response, uuid, resp}, state) do
+  defp report_response(uuid, resp, state, task) do
     {:ok, [_|requests]} = Drumbeat.Registry.remove_request(state.registry, uuid)
     case next_req(requests, resp) do
       nil -> {:noreply, resp}
-      req -> {:noreply, internal_place_request(state, uuid, req)}
+      req -> {:noreply, internal_place_request(state, uuid, req, [task])}
     end
   end
 
   defp next_req([], _), do: nil
   defp next_req([next|t], resp),  do: [Drumbeat.Request.successor(resp, next)|t]
 
-  defp internal_place_request(state, uuid, [req|_] = reqs) do
+  defp internal_place_request(state, uuid, [req|_] = reqs, remove_tasks \\ []) do
     :ok = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
     t = %Task{} = Drumbeat.DispatchSup.start_request_worker(state.pool, uuid, req)
-    %Drumbeat.Dispatch{state|tasks: [t|state.tasks]}
+    %Drumbeat.Dispatch{state|tasks: [t|state.tasks] -- remove_tasks}
   end
 
   def handle_call({:place_request, uuid, request},
@@ -58,10 +56,8 @@ defmodule Drumbeat.Dispatch do
 
   def handle_info(msg, state) do
     case Task.find(state.tasks, msg) do
-      {{id, %Drumbeat.Request{} = req}, task} ->
-        report_response(self(), id, req)
-        {:noreply, %Drumbeat.Dispatch{state|tasks: state.tasks -- [task]}}
       nil -> {:noreply, state}
+      {{id, %Drumbeat.Request{} = r}, task} -> report_response(id, r, state, task)
     end
   end
 end
