@@ -15,7 +15,7 @@ defmodule Drumbeat.SenderSup do
 
   def init(:ok) do
     children = [
-      worker(@worker_name, [], restart: :temporary)
+      worker(@worker_name, [], restart: :transient)
     ]
     supervise(children,
               strategy: :simple_one_for_one,
