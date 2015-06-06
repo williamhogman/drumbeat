@@ -56,7 +56,7 @@ defmodule Drumbeat.Dispatch do
     registry = state(current_state, :registry)
     pool = state(current_state, :pool)
     :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
-    :ok = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
+    %Task{} = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
   end
 
 
@@ -74,5 +74,15 @@ defmodule Drumbeat.Dispatch do
 
   def handle_call(:stop, _from, state) do
     {:stop, :normal, :ok, state}
+  end
+
+  def handle_info(msg, state) do
+    case msg do
+      {ref, {id, %Drumbeat.Request{} = req}} when is_reference(ref) ->
+        report_response(self(), id, req)
+      _ -> nil
+    end
+
+    {:noreply, state}
   end
 end

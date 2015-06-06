@@ -1,11 +1,5 @@
 alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Sender do
-
-  def start_link(dispatch, uuid, request) do
-    pid = spawn_link(Drumbeat.Sender, :run, [dispatch, uuid, request])
-    {:ok, pid}
-  end
-
   defp perform_request(req) do
     case req.url.type do
       :http ->
@@ -18,7 +12,5 @@ defmodule Drumbeat.Sender do
     end
   end
 
-  def run(dispatch, id, request) do
-    Drumbeat.Dispatch.report_response(dispatch, id, %Req{} = perform_request(request))
-  end
+  def run(_, id, request), do: {id, perform_request(request)}
 end

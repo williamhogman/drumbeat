@@ -16,11 +16,10 @@ defmodule Drumbeat.DispatchSup do
   end
 
   def start_request_worker(worker_sup, uuid, request) do
-    {:ok, _child} = Task.Supervisor.start_child(
+    Task.Supervisor.async(
       worker_sup,
-      @worker_name, :start_link,
+      @worker_name, :run,
       [self(), uuid, request])
-    :ok
   end
 
   def init(:ok) do
