@@ -14,9 +14,10 @@ defmodule Drumbeat.Dispatch do
   Places an HTTP request
   """
   def place_request(pid, uuid, request), do: call(pid, {:place_request, uuid, request})
-  def get_status(pid, uuid), do: call(pid, {:get_status, uuid})
 
-  def stop(pid), do: call(pid, :stop)
+  def handle_call({:place_request, uuid, request}, _from, state) do
+    {:reply, {:ok, uuid}, internal_place_request(state, uuid, request)}
+  end
 
   def init([dispatch_sup]) do
     cast(self(), {:start_pool, dispatch_sup})
@@ -45,14 +46,6 @@ defmodule Drumbeat.Dispatch do
     t = %Task{} = Drumbeat.DispatchSup.start_request_worker(state.pool, uuid, req)
     %Drumbeat.Dispatch{state|tasks: [t|state.tasks] -- remove_tasks}
   end
-
-  def handle_call({:place_request, uuid, request},
-                  _from, state) do
-    new_state = internal_place_request(state, uuid, request)
-    {:reply, {:ok, uuid}, new_state}
-  end
-
-  def handle_call(:stop, _from, state), do: {:stop, :normal, :ok, state}
 
   def handle_info(msg, state) do
     case Task.find(state.tasks, msg) do
