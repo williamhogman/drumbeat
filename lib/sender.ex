@@ -21,14 +21,16 @@ defmodule Drumbeat.Sender.HTTP do
       {:ok, body} -> body
     end
   end
-
   defp preprocess_body(nil), do: ""
   defp preprocess_body(body), do: body
+
+  defp preprocess_headers(nil), do: %{}
+  defp preprocess_headers(headers), do: Dict.delete(headers, :"Content-Length")
 
   def request(method, url, headers, body) do
     try do
       resp = HTTPotion.request(method || :get, url,
-                               headers: headers || [],
+                               headers: preprocess_headers(headers),
                                body: preprocess_body(body),
                                timeout: @timeout
       )
@@ -36,6 +38,7 @@ defmodule Drumbeat.Sender.HTTP do
            body: decode_response_body(resp)}
     rescue
       e in HTTPotion.HTTPError ->
+        IO.inspect([method, url, headers, body])
         IO.inspect(e)
         e
     end

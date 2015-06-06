@@ -11,10 +11,15 @@ def place(data):
         pprint.pprint(req)
 
 
+http_get = {
+    'url': 'http://httpbin.org/get',
+}
+
 http_bin = {
     'url': 'http://httpbin.org/post',
     'method': 'post',
-    'body': {'foo': 1}
 }
 
-place([http_bin])
+
+
+place([http_get, http_bin])
