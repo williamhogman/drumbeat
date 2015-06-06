@@ -1,7 +1,6 @@
 defmodule Drumbeat.Dispatch do
   use GenServer
-  require Record
-  Record.defrecord :state, registry: nil, pool: nil
+  defstruct registry: nil, pool: nil, requests: nil
 
   @doc """
   Starts the request dispatcher
@@ -26,23 +25,21 @@ defmodule Drumbeat.Dispatch do
     GenServer.call(dispatch, {:get_status, uuid})
   end
 
-  def stop(server) do
-    GenServer.call(server, :stop)
-  end
+  def stop(server), do: GenServer.call(server, :stop)
 
   def init([dispatch_sup]) do
     GenServer.cast(self(), {:start_pool, dispatch_sup})
     {:ok, registry} = Drumbeat.Registry.start_link()
-    {:ok, state(registry: registry)}
+    {:ok, %Drumbeat.Dispatch{registry: registry}}
   end
 
   def handle_cast({:start_pool, pid}, current_state) do
     pool = Drumbeat.DispatchSup.start_sender_pool(pid)
-    {:noreply, state(current_state, pool: pool)}
+    {:noreply, %Drumbeat.Dispatch{current_state | pool: pool}}
   end
 
   def handle_cast({:report_response, uuid, resp}, current_state) do
-    {:ok, requests} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
+    {:ok, requests} = Drumbeat.Registry.remove_request(current_state.registry, uuid)
     case requests do
       [_h|[]] -> :ok
       [_|[next|t]] ->
@@ -53,8 +50,8 @@ defmodule Drumbeat.Dispatch do
   end
 
   defp internal_place_request(current_state, uuid, [req|_] = reqs) do
-    registry = state(current_state, :registry)
-    pool = state(current_state, :pool)
+    registry = current_state.registry
+    pool = current_state.pool
     :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
     %Task{} = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
   end
@@ -67,7 +64,7 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_call({:get_status, uuid}, _from, current_state) do
-    registry = state(current_state, :registry)
+    registry = current_state.registry
     status = Drumbeat.Registry.has_request(registry, uuid)
     {:reply, {:ok, status}, current_state}
   end
