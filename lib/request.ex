@@ -1,35 +1,17 @@
 defmodule Drumbeat.Request do
-  defstruct url: nil, respond_to: nil, body: nil, headers: nil, method: nil
-  def successor(%Drumbeat.Request{respond_to: nil}, _, _), do: nil
-  def successor(%Drumbeat.Request{respond_to: respond_to}, headers, body) do
-    Drumbeat.Request.from_template(respond_to)
-    |> put_smart(:body, body)
-    |> put_smart(:headers, headers)
+  defstruct url: nil, body: nil, headers: nil, method: nil
+  def successor(%Drumbeat.Request{} = current, %Drumbeat.Request{} = next) do
+    Drumbeat.Request.from_template(next)
+    |> put_smart(:body, current.body)
+    |> put_smart(:headers, current.headers)
   end
 
-  def add_terminal_node(req, node) do
-    visit_requests(req, fn
-    (nil) -> node
-    (x) -> x
-    end)
+  def rewrite_url(req, from, to) do
+    %{req | url: Drumbeat.URL.rewrite(req.url, from, to)}
   end
-
-  def rewrite_urls(req, from, to) do
-    visit_requests(req, fn
-    (nil) -> nil
-    (%Drumbeat.Request{} = req) ->
-        %{req | url: Drumbeat.URL.rewrite(req.url, from, to)}
-    (x) -> x
-    end)
-
-  end
-
-  def visit_requests(nil, f), do: f.(nil)
-  def visit_requests(req, f) when is_map(req) and is_function(f) do
-    respond_to = req.respond_to
-    child = visit_requests(respond_to, f)
-    new = Map.put(req, :respond_to, child)
-    f.(new)
+  def rewrite_urls([], _, _), do: []
+  def rewrite_urls([h|t], from, to) do
+    [rewrite_url(h, from, to)|rewrite_urls(t, from, to)]
   end
 
   defp put_smart(map, _key, nil), do: map
@@ -78,20 +60,9 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   def decode_method("put"), do: :put
   def decode_method(x) when is_binary(x), do: String.downcase(x)
 
-  defp decode_respond_to(nil, _), do: nil
-  defp decode_respond_to(value, options) do
-    struct = Drumbeat.Request.__struct__
-    Enum.into(Map.from_struct(struct), %{}, fn {key, default} ->
-      {key, Map.get(value, Atom.to_string(key), default)}
-    end)
-    |> Map.put(:__struct__, struct.__struct__)
-    |> decode(options)
-  end
-
   def decode(nil, opts), do: nil
   def decode(value, opts) do
     value
-    |> Map.put(:respond_to, decode_respond_to(value.respond_to, opts))
     |> Map.put(:url, decode_url(value.url, opts))
     |> Map.put(:method, decode_method(value.method))
   end

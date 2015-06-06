@@ -17,9 +17,4 @@ http_bin = {
     'body': {'foo': 1}
 }
 
-place(http_bin)
-
-place({
-    'url': {'type': 'quote'},
-    'respond_to': http_bin
-})
+place([http_bin])

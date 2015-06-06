@@ -46,19 +46,21 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_cast({:report_response, {uuid, resp}}, current_state) do
-    {:ok, request} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
-    case Drumbeat.Request.successor(request, resp.headers, resp.body) do
-      nil -> :ok
-      successor -> internal_place_request(current_state, uuid, successor)
+    {:ok, requests} = Drumbeat.Registry.remove_request(state(current_state, :registry), uuid)
+    case requests do
+      [_h|[]] -> :ok
+      [_|[next|t]] ->
+        successor = Drumbeat.Request.successor(resp, next)
+        internal_place_request(current_state, uuid, [successor|t])
     end
     {:noreply, current_state}
   end
 
-  defp internal_place_request(current_state, uuid, request) do
+  defp internal_place_request(current_state, uuid, [req|_] = reqs) do
     registry = state(current_state, :registry)
     pool = state(current_state, :pool)
-    :ok = Drumbeat.Registry.place_request(registry, uuid, request)
-    :ok = Drumbeat.SenderSup.start_worker(pool, uuid, request)
+    :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
+    :ok = Drumbeat.SenderSup.start_worker(pool, uuid, req)
   end
 
 
