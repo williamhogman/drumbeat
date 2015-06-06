@@ -5,7 +5,7 @@ defmodule Drumbeat.DispatchSup do
 
   def start_link, do: Supervisor.start_link(__MODULE__, :ok)
 
-  def pool_spec, do: supervisor(
+  defp pool_spec, do: supervisor(
             Task.Supervisor,
             [[max_restarts: 5, max_seconds: 3600,
               restart: :transient]])

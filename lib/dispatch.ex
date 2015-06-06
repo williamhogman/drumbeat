@@ -32,15 +32,15 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_cast({:report_response, uuid, resp}, state) do
-    {:ok, requests} = Drumbeat.Registry.remove_request(state.registry, uuid)
-    new_state = case requests do
-      [_h|[]] -> state
-      [_|[next|t]] ->
-        successor = Drumbeat.Request.successor(resp, next)
-        internal_place_request(state, uuid, [successor|t])
+    {:ok, [_|requests]} = Drumbeat.Registry.remove_request(state.registry, uuid)
+    case next_req(requests, resp) do
+      nil -> {:noreply, resp}
+      req -> {:noreply, internal_place_request(state, uuid, req)}
     end
-    {:noreply, new_state}
   end
+
+  defp next_req([], _), do: nil
+  defp next_req([next|t], resp),  do: [Drumbeat.Request.successor(resp, next)|t]
 
   defp internal_place_request(state, uuid, [req|_] = reqs) do
     :ok = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
@@ -54,22 +54,14 @@ defmodule Drumbeat.Dispatch do
     {:reply, {:ok, uuid}, new_state}
   end
 
-  def handle_call({:get_status, uuid}, _from, state) do
-    registry = state.registry
-    status = Drumbeat.Registry.has_request(registry, uuid)
-    {:reply, {:ok, status}, state}
-  end
-
-  def handle_call(:stop, _from, state) do
-    {:stop, :normal, :ok, state}
-  end
+  def handle_call(:stop, _from, state), do: {:stop, :normal, :ok, state}
 
   def handle_info(msg, state) do
     case Task.find(state.tasks, msg) do
-      {{id, %Drumbeat.Request{} = req}, _ref} ->
+      {{id, %Drumbeat.Request{} = req}, task} ->
         report_response(self(), id, req)
-      nil -> nil
+        {:noreply, %Drumbeat.Dispatch{state|tasks: state.tasks -- [task]}}
+      nil -> {:noreply, state}
     end
-    {:noreply, state}
   end
 end
