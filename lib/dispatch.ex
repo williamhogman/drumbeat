@@ -60,7 +60,7 @@ defmodule Drumbeat.Dispatch do
     registry = state(current_state, :registry)
     pool = state(current_state, :pool)
     :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
-    :ok = Drumbeat.SenderSup.start_worker(pool, uuid, req)
+    :ok = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
   end
 
 
