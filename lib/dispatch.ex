@@ -1,6 +1,7 @@
 defmodule Drumbeat.Dispatch do
+  import GenServer
   use GenServer
-  defstruct registry: nil, pool: nil, requests: nil
+  defstruct registry: nil, pool: nil, tasks: []
 
   @doc """
   Starts the request dispatcher
@@ -12,23 +13,15 @@ defmodule Drumbeat.Dispatch do
   @doc """
   Places an HTTP request
   """
-  def place_request(dispatch, uuid, request) do
-    GenServer.call(dispatch, {:place_request, uuid, request})
-  end
+  def place_request(pid, uuid, request), do: call(pid, {:place_request, uuid, request})
+  def report_response(pid, uuid, resp), do: cast(pid, {:report_response, uuid, resp})
 
-  def report_response(dispatch, uuid, resp) do
-    GenServer.cast(dispatch, {:report_response, uuid, resp})
-    :ok
-  end
+  def get_status(pid, uuid), do: call(pid, {:get_status, uuid})
 
-  def get_status(dispatch, uuid) do
-    GenServer.call(dispatch, {:get_status, uuid})
-  end
-
-  def stop(server), do: GenServer.call(server, :stop)
+  def stop(pid), do: call(pid, :stop)
 
   def init([dispatch_sup]) do
-    GenServer.cast(self(), {:start_pool, dispatch_sup})
+    cast(self(), {:start_pool, dispatch_sup})
     {:ok, registry} = Drumbeat.Registry.start_link()
     {:ok, %Drumbeat.Dispatch{registry: registry}}
   end
@@ -40,27 +33,25 @@ defmodule Drumbeat.Dispatch do
 
   def handle_cast({:report_response, uuid, resp}, state) do
     {:ok, requests} = Drumbeat.Registry.remove_request(state.registry, uuid)
-    case requests do
-      [_h|[]] -> :ok
+    new_state = case requests do
+      [_h|[]] -> state
       [_|[next|t]] ->
         successor = Drumbeat.Request.successor(resp, next)
         internal_place_request(state, uuid, [successor|t])
     end
-    {:noreply, state}
+    {:noreply, new_state}
   end
 
   defp internal_place_request(state, uuid, [req|_] = reqs) do
-    registry = state.registry
-    pool = state.pool
-    :ok = Drumbeat.Registry.place_request(registry, uuid, reqs)
-    %Task{} = Drumbeat.DispatchSup.start_request_worker(pool, uuid, req)
+    :ok = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
+    t = %Task{} = Drumbeat.DispatchSup.start_request_worker(state.pool, uuid, req)
+    %Drumbeat.Dispatch{state|tasks: [t|state.tasks]}
   end
-
 
   def handle_call({:place_request, uuid, request},
                   _from, state) do
-    internal_place_request(state, uuid, request)
-    {:reply, {:ok, uuid}, state}
+    new_state = internal_place_request(state, uuid, request)
+    {:reply, {:ok, uuid}, new_state}
   end
 
   def handle_call({:get_status, uuid}, _from, state) do
@@ -74,12 +65,11 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_info(msg, state) do
-    case msg do
-      {ref, {id, %Drumbeat.Request{} = req}} when is_reference(ref) ->
+    case Task.find(state.tasks, msg) do
+      {{id, %Drumbeat.Request{} = req}, _ref} ->
         report_response(self(), id, req)
-      _ -> nil
+      nil -> nil
     end
-
     {:noreply, state}
   end
 end
