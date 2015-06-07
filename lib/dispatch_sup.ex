@@ -12,10 +12,10 @@ defmodule Drumbeat.DispatchSup do
 
   def start_sender_pool(sup_pid), do: Supervisor.start_child(sup_pid, pool_spec)
 
-  def start_request_worker(worker_sup, uuid, request), do:   Task.Supervisor.async(
+  def start_request_worker(worker_sup, id, req), do: Task.Supervisor.async(
             worker_sup,
             @worker_name, :run,
-            [self(), uuid, request])
+            [self(), id, req])
 
   def init(:ok) do
     children = [

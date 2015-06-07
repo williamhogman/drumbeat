@@ -9,7 +9,7 @@ def place(data):
         pprint.pprint(req.json())
     except:
         pprint.pprint(req)
-
+        pprint.pprint(req.content)
 
 http_get = {
     'url': 'http://httpbin.org/get',
@@ -21,5 +21,5 @@ http_bin = {
 }
 
 
-
-place([http_get, http_bin])
+#place([http_get])
+place([http_get, http_bin, dict(type='quote')])

@@ -1,14 +1,15 @@
 alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Sender do
   defp perform_request(req) do
-    case req.url.type do
+    case req.type do
       :http ->
         Drumbeat.Sender.HTTP.request(req)
       :message_sink ->
-        send req.url.url, {:http_response, req}
+        send req.url, {:http_response, req}
         req
       :quote -> %Req{body: req, headers: []}
-      :eval -> Drumbeat.Parser.parse(req.body)
+      :eval ->
+        Drumbeat.Parser.parse(req.body.body)
     end
   end
 

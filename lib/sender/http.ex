@@ -28,7 +28,7 @@ defmodule Drumbeat.Sender.HTTP do
 
   def request(r = %Req{}) do
     try do
-      resp = HTTPotion.request(r.method || :get, r.url.url,
+      resp = HTTPotion.request(r.method || :get, r.url,
                                headers: preprocess_headers(r.headers),
                                body: preprocess_body(r.body),
                                timeout: @timeout)
