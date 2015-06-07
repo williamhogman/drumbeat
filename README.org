@@ -9,9 +9,9 @@ The service receives these HTTP programs via a standard JSON-API. For
 example a simple HTTP request to http://httpbin.org/get would look
 like this.
 
-#BEGIN_SRC js
+#+BEGIN_SRC js
 [{'url': 'http://httpbin.org/get'}]
-#END_SRC
+#+END_SRC
 
 This request, if sent http://localhost:4000/sync would yield the
 request, would the same results as placing a HTTP request to
@@ -20,12 +20,12 @@ same request can be placed using the URL http://localhost:4000/json.
 
 Now lets try a slightly more complicated interaction.
 
-#BEGIN_SRC js
+#+BEGIN_SRC js
 [
 {'url': 'http://httpbin.org/get'}
 {'url': 'http://httpbin.org/post', 'method': 'POST'}
 ]
-#END
+#+END_SRC
 
 In this example, just as before we get the results of
 http://httpbin.org/get, but instead of returning these to the
@@ -37,13 +37,13 @@ For some API endpoints sending actual headers may not be optimal and
 for this reason, drumbeat offers a quote operation that transforms a
 standard HTTP request into a JSON representation.
 
-#BEGIN_SRC js
+#+BEGIN_SRC js
 [
 {'url': 'http://httpbin.org/get'}
 {'type': 'quote'}
 {'url': 'http://httpbin.org/post', 'method': 'POST'}
 ]
-#END
+#+END_SRC
 
 In this example instead of the post endpoint receiving an
 approximation of the request, it receives it in a JSON-represenation
