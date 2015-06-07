@@ -1,5 +1,12 @@
 #+TITLE: Drumbeat
 
+Run it:
+#+BEGIN_SRC bash
+mix deps.get
+iex -S mix
+Drumbeat.start
+#+END_SRC
+
 Drumbeat is a generalization of the HTTP protocol. It uses a number of
 primitives and utilizes emergent properties of these to solve common
 HTTP use-cases. Primarily, it allows for the specification of
