@@ -36,7 +36,9 @@ defmodule Drumbeat.Web do
     await_response()
   end
 
+  defp template_for("json"), do: "templates/json.json"
   defp template_for("sync"), do: "templates/sync.json"
+  defp template_for("raw"), do: "templates/sync.json"
   defp template_for(_), do: "templates/raw.json"
 
   match "/*path" do

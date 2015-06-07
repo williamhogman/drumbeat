@@ -1,0 +1,4 @@
+[
+    {"type": "placeholder"},
+    {"type": "message_sink", "url": "sender_pid"}
+]

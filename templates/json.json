@@ -1,0 +1,5 @@
+[
+    {"type": "placeholder"},
+    {"type": "quote", "url": "sender_pid"}
+    {"type": "message_sink", "url": "sender_pid"}
+]
