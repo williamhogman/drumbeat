@@ -5,6 +5,67 @@ primitives and utilizes emergent properties of these to solve common
 HTTP use-cases. Primarily, it allows for the specification of
 succession of HTTP requests, stemming from a single request.
 
+The service receives these HTTP programs via a standard JSON-API. For
+example a simple HTTP request to http://httpbin.org/get would look
+like this.
+
+#BEGIN_SRC js
+[{'url': 'http://httpbin.org/get'}]
+#END_SRC
+
+This request, if sent http://localhost:4000/sync would yield the
+request, would the same results as placing a HTTP request to
+http://httpbin.org/get. If the user prefers a JSON representation the
+same request can be placed using the URL http://localhost:4000/json.
+
+Now lets try a slightly more complicated interaction.
+
+#BEGIN_SRC js
+[
+{'url': 'http://httpbin.org/get'}
+{'url': 'http://httpbin.org/post', 'method': 'POST'}
+]
+#END
+
+In this example, just as before we get the results of
+http://httpbin.org/get, but instead of returning these to the
+consumer, we instead, use the body of http://httpbin.org/get as the
+body for the http://httpbin.org/post request. Finally the body is
+collected and sent to the user.
+
+For some API endpoints sending actual headers may not be optimal and
+for this reason, drumbeat offers a quote operation that transforms a
+standard HTTP request into a JSON representation.
+
+#BEGIN_SRC js
+[
+{'url': 'http://httpbin.org/get'}
+{'type': 'quote'}
+{'url': 'http://httpbin.org/post', 'method': 'POST'}
+]
+#END
+
+In this example instead of the post endpoint receiving an
+approximation of the request, it receives it in a JSON-represenation
+with keys such as body, headers etc.
+
+These specical operations do not result in actual HTTP requests but
+are instead handled internally inside Drumbeat. Infact this very
+operation is the difference between the JSON and SYNC endpoints.
+
+In addition to quote, two other operations are provided, eval and
+message_sink. The eval operation parses the body of the present
+request as a list of requests and performs these requests before
+continuing with the requests in the current program. Finally the
+message_sink operation allows for sending the current state as a
+message to an Erlang process. The process of writing responses to
+clients uses this operation, as we have seen in the JSON and SYNC
+endpoints.
+
+The endpoints provided by drumbeat, raw, sync and json are specified
+using the requests syntax and a specical placeholder. For examples of
+this look at the templates directory.
+
 * Generalizing HTTP
   HTTP is essance a very simple protocol, a HTTP Request can be
   described by a tuple of the form $\{ m, u, h, b \}$ where the
@@ -53,20 +114,12 @@ succession of HTTP requests, stemming from a single request.
   a service provide asyncrony may be useful in for example a web
   spider.
 
-  To accomodate this a field called respond_to was added. Upon the
-  completion of request, the response of that request and the value of
-  respond_to are combined into a successor request which is
-  immediately placed. As each request may have a successor this
-  processes is executed recursivly until a null value is reached.
-
   To become truely useful, a number of atomic operations (not in the
   concurrency sense) need to be added. Firstly, a quote operation
   which turns a http request into a Map representation (which is
   implicitly serialized as JSON when used in a request). This
   operation could trivially be implemented in a separate service
-  although is made internal to avoid IO costs. The converse of the
+  although is made internal to avoid IO costs. The inverse  of the
   transition this transition, eval, parses a request having a body
   consisting of map-representation of a request. (which could have been
   implicitly deserialized from JSON)
-
-** Examples

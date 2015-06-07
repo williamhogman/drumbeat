@@ -4,7 +4,7 @@ import json
 
 
 def place(data):
-    req = requests.get('http://localhost:4000/', data=json.dumps(data))
+    req = requests.get('http://localhost:4000/sync', data=json.dumps(data))
     try:
         pprint.pprint(req.json())
     except:
