@@ -26,12 +26,13 @@ defmodule Drumbeat.Dispatch do
   end
 
   def handle_cast({:start_pool, pid}, state) do
-    pool = Drumbeat.DispatchSup.start_sender_pool(pid)
-    {:noreply, %Drumbeat.Dispatch{state | pool: pool}}
+    {:ok, pid} = Drumbeat.DispatchSup.start_sender_pool(pid)
+    {:noreply, %Drumbeat.Dispatch{state | pool: pid}}
   end
 
   defp report_response(uuid, resp, state, task) do
     {:ok, [_|requests]} = Drumbeat.Registry.remove_request(state.registry, uuid)
+
     case next_req(requests, resp) do
       nil -> {:noreply, resp}
       req -> {:noreply, internal_place_request(state, uuid, req, [task])}
