@@ -38,4 +38,20 @@ defmodule RequestTest do
     assert succ == %Drumbeat.Request{body: :y, method: :z}
   end
 
+  test "Successors all keys carry" do
+    resp = %Drumbeat.Request{
+                        body: :a,
+                        headers: :b,
+                        method: :c,
+                        url: :d,
+                        type: :e
+                    }
+    next = %Drumbeat.Request{}
+    succ = Drumbeat.Request.successor(
+      %Drumbeat.Request{},
+      resp
+    )
+    assert resp == succ
+  end
+
 end
