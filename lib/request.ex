@@ -5,6 +5,8 @@ defmodule Drumbeat.Request do
     |> put_smart(:body, resp.body)
     |> put_smart(:headers, resp.headers)
     |> put_smart(:method, resp.method)
+    |> put_smart(:url, resp.url)
+    |> put_smart(:type, resp.type)
   end
 
   def rewrite_url(req, from, to) do

@@ -37,4 +37,5 @@ defmodule RequestTest do
     )
     assert succ == %Drumbeat.Request{body: :y, method: :z}
   end
+
 end
