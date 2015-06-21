@@ -31,22 +31,15 @@ defmodule Drumbeat.Dispatch do
   end
 
   defp report_response(uuid, resp, state, task) do
-    {[_|requests], new_reg} = Drumbeat.Registry.remove_request(state.registry, uuid)
-    new_state = %Drumbeat.Dispatch{state | registry: new_reg}
-    case next_req(requests, resp) do
-      [] -> {:noreply, state}
-      nil -> {:noreply, state}
-      req -> {:noreply, internal_place_request(new_state, uuid, req, [task])}
+    adv = Drumbeat.Registry.advance_request(state.registry, uuid, resp)
+    res = case adv do
+            {nil, new_reg} ->
+              %Drumbeat.Dispatch{state | registry: new_reg}
+            {reqs, new_reg} ->
+              internal_place_request(%Drumbeat.Dispatch{state | registry: new_reg}, uuid, reqs, [task])
+          end
+    {:noreply, res}
     end
-  end
-
-  defp next_req([], resp) when is_map(resp), do: nil
-  defp next_req([h|t], resp) when is_map(resp) do
-    [Drumbeat.Request.successor(resp, h)|t]
-  end
-  defp next_req(reqs, resps) do
-    resps ++ reqs
-  end
 
   defp internal_place_request(state, uuid, [req|_] = reqs, remove_tasks \\ []) do
     new_reg = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
