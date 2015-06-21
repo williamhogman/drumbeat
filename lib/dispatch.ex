@@ -21,7 +21,7 @@ defmodule Drumbeat.Dispatch do
 
   def init([dispatch_sup]) do
     cast(self(), {:start_pool, dispatch_sup})
-    {:ok, registry} = Drumbeat.Registry.start_link()
+    registry = Drumbeat.Registry.new()
     {:ok, %Drumbeat.Dispatch{registry: registry}}
   end
 
@@ -31,11 +31,12 @@ defmodule Drumbeat.Dispatch do
   end
 
   defp report_response(uuid, resp, state, task) do
-    {:ok, [_|requests]} = Drumbeat.Registry.remove_request(state.registry, uuid)
+    {[_|requests], new_reg} = Drumbeat.Registry.remove_request(state.registry, uuid)
+    new_state = %Drumbeat.Dispatch{state | registry: new_reg}
     case next_req(requests, resp) do
       [] -> {:noreply, state}
       nil -> {:noreply, state}
-      req -> {:noreply, internal_place_request(state, uuid, req, [task])}
+      req -> {:noreply, internal_place_request(new_state, uuid, req, [task])}
     end
   end
 
@@ -48,9 +49,9 @@ defmodule Drumbeat.Dispatch do
   end
 
   defp internal_place_request(state, uuid, [req|_] = reqs, remove_tasks \\ []) do
-    :ok = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
+    new_reg = Drumbeat.Registry.place_request(state.registry, uuid, reqs)
     t = %Task{} = Drumbeat.DispatchSup.start_request_worker(state.pool, uuid, req)
-    %Drumbeat.Dispatch{state|tasks: [t|state.tasks] -- remove_tasks}
+    %Drumbeat.Dispatch{state|tasks: [t|state.tasks] -- remove_tasks, registry: new_reg}
   end
 
   def handle_info(msg, state) do
