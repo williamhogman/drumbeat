@@ -152,4 +152,20 @@ defmodule RequestDecoderTest do
     end)
     |> all_match(Enum.map(cases, &String.to_atom/1))
   end
+
+  test "Uppercase methods works" do
+    cases = [
+      "head",
+      "get",
+      "post",
+      "put",
+      "patch",
+      "delete",
+    ]
+    cases |> Enum.map(fn (x) ->
+      decode(%Req{method: String.upcase(x)}).method
+    end)
+    |> all_match(Enum.map(cases, &String.to_atom/1))
+  end
+
 end
