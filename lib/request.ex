@@ -53,6 +53,8 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   defp method("post"), do: :post
   defp method("put"), do: :put
   defp method(x) when is_binary(x), do: String.downcase(x)
+  defp method("delete"), do: :delete
+  defp method("patch"), do: :patch
   defp method(x) when is_atom(x), do: x
 
   def decode(nil, opts), do: nil
