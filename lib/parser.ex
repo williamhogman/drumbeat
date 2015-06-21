@@ -13,10 +13,6 @@ defmodule Drumbeat.Parser do
     x |> parse_json |> parse
   end
 
-  def parse_and_decorate(body) do
-    parse(body) ++ [Req.quote_req, Req.message_sink]
-  end
-
   def with_template(fname, val) do
     fname |> from_file |> replace_template val
   end

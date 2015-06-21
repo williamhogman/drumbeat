@@ -1,5 +1,9 @@
 defmodule Drumbeat.Request do
   defstruct url: nil, body: nil, headers: nil, method: nil, type: :http
+
+  @type req :: %Drumbeat.Request{}
+
+  @spec successor(req, req) :: req
   def successor(%Drumbeat.Request{} = resp, %Drumbeat.Request{} = next) do
     next
     |> put_smart(:body, resp.body)
@@ -9,9 +13,12 @@ defmodule Drumbeat.Request do
     |> put_smart(:type, resp.type)
   end
 
+  @spec rewrite_url(req, any, any) :: req
   def rewrite_url(req, from, to) do
     %{req | url: rewrite(req.url, from, to)}
   end
+
+  @spec rewrite_urls([req], any, any) :: [req]
   def rewrite_urls([], _, _), do: []
   def rewrite_urls([h|t], from, to) do
     [rewrite_url(h, from, to)|rewrite_urls(t, from, to)]
@@ -27,10 +34,13 @@ defmodule Drumbeat.Request do
     end
   end
 
+  @spec message_sink(pid) :: req
   def message_sink(pid) do
     %Drumbeat.Request{type: :message_sink, url: pid}
   end
+  @spec message_sink() :: req
   def message_sink, do: message_sink(self())
+  @spec quote_req() :: req
   def quote_req, do: %Drumbeat.Request{type: :quote}
 end
 
@@ -47,7 +57,6 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   def url(x), do: x
 
 
-  defp method_table(nil), do: nil
   defp method_table(""), do: nil
   defp method_table("get"), do: :get
   defp method_table("head"), do: :head
@@ -56,6 +65,7 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   defp method_table("delete"), do: :delete
   defp method_table("patch"), do: :patch
 
+  defp method(nil), do: nil
   defp method(x) when is_binary(x), do: method_table(String.downcase(x))
   defp method(x) when is_atom(x), do: x
 
