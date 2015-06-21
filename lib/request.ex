@@ -46,15 +46,17 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   def url("sender_pid"), do: :sender_pid
   def url(x), do: x
 
-  defp method(nil), do: nil
-  defp method(""), do: nil
-  defp method("get"), do: :get
-  defp method("head"), do: :head
-  defp method("post"), do: :post
-  defp method("put"), do: :put
-  defp method("delete"), do: :delete
-  defp method("patch"), do: :patch
-  defp method(x) when is_binary(x), do: method(String.downcase(x))
+
+  defp method_table(nil), do: nil
+  defp method_table(""), do: nil
+  defp method_table("get"), do: :get
+  defp method_table("head"), do: :head
+  defp method_table("post"), do: :post
+  defp method_table("put"), do: :put
+  defp method_table("delete"), do: :delete
+  defp method_table("patch"), do: :patch
+
+  defp method(x) when is_binary(x), do: method_table(String.downcase(x))
   defp method(x) when is_atom(x), do: x
 
   def decode(nil, opts), do: nil
