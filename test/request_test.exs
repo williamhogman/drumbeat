@@ -160,6 +160,10 @@ defmodule RequestDecoderTest do
     end)
     |> all_match(Enum.map(methods, &String.to_atom/1))
   end
+
+  test "Non-methods throw" do
+    req = %Req{method: "notamethod"}
+    assert catch_error(decode req)
   end
 
 end
