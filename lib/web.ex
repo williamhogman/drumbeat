@@ -44,7 +44,7 @@ defmodule Drumbeat.Web do
   match "/*path" do
     {new_conn, body} = read_full_body!(conn)
     body_reqs = %Drumbeat.Request{type: :eval, body: to_request(new_conn, body)}
-    reqs = path |> template_for |> Drumbeat.Parser.with_template(body_reqs)
+    reqs = path |> List.first |> template_for |> Drumbeat.Parser.with_template(body_reqs)
     send_response(new_conn, perform_request(reqs))
   end
 end
