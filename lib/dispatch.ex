@@ -32,13 +32,6 @@ defmodule Drumbeat.Dispatch do
 
   defp report_response(uuid, resp, state, task) do
     {:ok, [_|requests]} = Drumbeat.Registry.remove_request(state.registry, uuid)
-    IO.inspect("--- program:")
-    IO.inspect(requests)
-    IO.inspect("--- response:")
-    IO.inspect(resp)
-    IO.inspect("--- next:")
-    IO.inspect(next_req(requests, resp))
-    IO.inspect("--------")
     case next_req(requests, resp) do
       [] -> {:noreply, state}
       nil -> {:noreply, state}
