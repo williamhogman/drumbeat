@@ -97,7 +97,6 @@ defmodule RequestTest do
     res = Req.quote_req
     assert res.type == :quote
   end
-
 end
 
 defmodule RequestDecoderTest do
@@ -109,8 +108,6 @@ defmodule RequestDecoderTest do
   end
 
   defp all_match(results, expected) do
-    IO.inspect(results)
-    IO.inspect(expected)
     Enum.zip(results, expected)
     |> Enum.each fn ({res, exp}) ->
       assert res == exp
@@ -146,6 +143,7 @@ defmodule RequestDecoderTest do
       "head",
       "get",
       "post",
+      "put",
       "patch",
       "delete",
     ]
