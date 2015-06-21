@@ -3,98 +3,98 @@ defmodule RequestTest do
   use ExUnit.Case
 
   test "Successor null-case" do
-    resp = %Drumbeat.Request{}
-    next = %Drumbeat.Request{}
-    res = Drumbeat.Request.successor(resp, next)
+    resp = %Req{}
+    next = %Req{}
+    res = Req.successor(resp, next)
 
-    assert %Drumbeat.Request{} == res
+    assert %Req{} == res
     assert res == next
     assert res == resp
   end
 
   test "Successor values carry" do
-    resp = %Drumbeat.Request{body: :x}
-    succ = Drumbeat.Request.successor(
+    resp = %Req{body: :x}
+    succ = Req.successor(
       resp,
-      %Drumbeat.Request{}
+      %Req{}
     )
     assert succ == resp
   end
 
   test "Successor responses don't override set values" do
-    next = %Drumbeat.Request{body: :y}
-    succ = Drumbeat.Request.successor(
-      %Drumbeat.Request{body: :x},
+    next = %Req{body: :y}
+    succ = Req.successor(
+      %Req{body: :x},
       next
     )
     assert succ == next
   end
 
   test "Successor uses both sources" do
-    next = %Drumbeat.Request{body: :y}
-    succ = Drumbeat.Request.successor(
-      %Drumbeat.Request{method: :z},
+    next = %Req{body: :y}
+    succ = Req.successor(
+      %Req{method: :z},
       next
     )
-    assert succ == %Drumbeat.Request{body: :y, method: :z}
+    assert succ == %Req{body: :y, method: :z}
   end
 
   test "Successors all keys carry" do
-    resp = %Drumbeat.Request{
+    resp = %Req{
                         body: :a,
                         headers: :b,
                         method: :c,
                         url: :d,
                         type: :e
                     }
-    succ = Drumbeat.Request.successor(
-      %Drumbeat.Request{},
+    succ = Req.successor(
+      %Req{},
       resp
     )
     assert resp == succ
   end
 
   test "Rewriting url when match" do
-    prior = %Drumbeat.Request{url: :a}
-    [res|[]] = Drumbeat.Request.rewrite_urls([prior], :a, :b)
+    prior = %Req{url: :a}
+    [res|[]] = Req.rewrite_urls([prior], :a, :b)
     assert res.url == :b
   end
 
   test "Not rewriting urls when mismatched " do
-    prior = %Drumbeat.Request{url: :c}
-    [res|[]] = Drumbeat.Request.rewrite_urls([prior], :a, :b)
+    prior = %Req{url: :c}
+    [res|[]] = Req.rewrite_urls([prior], :a, :b)
     assert res.url == :c
   end
 
   test "Rewriting multiple urls" do
-    a = %Drumbeat.Request{url: :a}
-    [a1_conv, a2_conv] = Drumbeat.Request.rewrite_urls([a, a], :a, :c)
+    a = %Req{url: :a}
+    [a1_conv, a2_conv] = Req.rewrite_urls([a, a], :a, :c)
     assert a1_conv.url == :c
     assert a2_conv.url == :c
   end
 
   test "Not rewriting some urls" do
-    a = %Drumbeat.Request{url: :a}
-    b = %Drumbeat.Request{url: :b}
-    [a_conv, b_conv] = Drumbeat.Request.rewrite_urls([a, b], :a, :c)
+    a = %Req{url: :a}
+    b = %Req{url: :b}
+    [a_conv, b_conv] = Req.rewrite_urls([a, b], :a, :c)
     assert a_conv.url == :c
     assert b_conv.url == :b
   end
 
   test "message_sink template works" do
-    res = Drumbeat.Request.message_sink(:a)
+    res = Req.message_sink(:a)
     assert res.type == :message_sink
     assert res.url == :a
   end
 
   test "implied message sink works" do
-    res = Drumbeat.Request.message_sink
+    res = Req.message_sink
     assert res.type == :message_sink
     assert res.url == self()
   end
 
   test "quote_req works" do
-    res = Drumbeat.Request.quote_req
+    res = Req.quote_req
     assert res.type == :quote
   end
 
@@ -105,7 +105,7 @@ defmodule RequestDecoderTest do
   use ExUnit.Case
 
   defp decode(data) do
-    Poison.Decoder.decode data,  as: Drumbeat.Request
+    Poison.Decoder.decode data,  as: Req
   end
 
   defp all_match(results, expected) do
@@ -118,7 +118,7 @@ defmodule RequestDecoderTest do
   end
 
   test "HTTP is default" do
-    res = decode %Drumbeat.Request{}
+    res = decode %Req{}
     assert res.type == :http
   end
 
@@ -131,13 +131,13 @@ defmodule RequestDecoderTest do
       "eval",
     ]
     cases |> Enum.map(fn (x) ->
-      decode(%Drumbeat.Request{type: x}).type
+      decode(%Req{type: x}).type
     end)
     |> all_match(Enum.map(cases, &String.to_atom/1))
   end
 
   test "Invalid types throw" do
-    base = %Drumbeat.Request{type: "foo"}
+    base = %Req{type: "foo"}
     assert catch_error(decode base)
   end
 
@@ -150,7 +150,7 @@ defmodule RequestDecoderTest do
       "delete",
     ]
     cases |> Enum.map(fn (x) ->
-      decode(%Drumbeat.Request{method: x}).method
+      decode(%Req{method: x}).method
     end)
     |> all_match(Enum.map(cases, &String.to_atom/1))
   end
