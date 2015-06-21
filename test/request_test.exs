@@ -107,6 +107,15 @@ defmodule RequestDecoderTest do
     Poison.Decoder.decode data,  as: Req
   end
 
+  defp methods, do: [
+    "head",
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+  ]
+
   defp all_match(results, expected) do
     Enum.zip(results, expected)
     |> Enum.each fn ({res, exp}) ->
@@ -139,33 +148,18 @@ defmodule RequestDecoderTest do
   end
 
   test "All valid http methods works" do
-    cases = [
-      "head",
-      "get",
-      "post",
-      "put",
-      "patch",
-      "delete",
-    ]
-    cases |> Enum.map(fn (x) ->
+    methods |> Enum.map(fn (x) ->
       decode(%Req{method: x}).method
     end)
-    |> all_match(Enum.map(cases, &String.to_atom/1))
+    |> all_match(Enum.map(methods, &String.to_atom/1))
   end
 
   test "Uppercase methods works" do
-    cases = [
-      "head",
-      "get",
-      "post",
-      "put",
-      "patch",
-      "delete",
-    ]
-    cases |> Enum.map(fn (x) ->
+    methods |> Enum.map(fn (x) ->
       decode(%Req{method: String.upcase(x)}).method
     end)
-    |> all_match(Enum.map(cases, &String.to_atom/1))
+    |> all_match(Enum.map(methods, &String.to_atom/1))
+  end
   end
 
 end
