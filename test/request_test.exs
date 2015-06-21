@@ -1,4 +1,5 @@
 defmodule RequestTest do
+  alias Drumbeat.Request, as: Req
   use ExUnit.Case
 
   test "Successor null-case" do
@@ -46,7 +47,6 @@ defmodule RequestTest do
                         url: :d,
                         type: :e
                     }
-    next = %Drumbeat.Request{}
     succ = Drumbeat.Request.successor(
       %Drumbeat.Request{},
       resp
@@ -98,4 +98,60 @@ defmodule RequestTest do
     assert res.type == :quote
   end
 
+end
+
+defmodule RequestDecoderTest do
+  alias Drumbeat.Request, as: Req
+  use ExUnit.Case
+
+  defp decode(data) do
+    Poison.Decoder.decode data,  as: Drumbeat.Request
+  end
+
+  defp all_match(results, expected) do
+    IO.inspect(results)
+    IO.inspect(expected)
+    Enum.zip(results, expected)
+    |> Enum.each fn ({res, exp}) ->
+      assert res == exp
+    end
+  end
+
+  test "HTTP is default" do
+    res = decode %Drumbeat.Request{}
+    assert res.type == :http
+  end
+
+  test "Actual types become symbols" do
+    cases = [
+      "http",
+      "message_sink",
+      "quote",
+      "placeholder",
+      "eval",
+    ]
+    cases |> Enum.map(fn (x) ->
+      decode(%Drumbeat.Request{type: x}).type
+    end)
+    |> all_match(Enum.map(cases, &String.to_atom/1))
+  end
+
+  test "Invalid types throw" do
+    base = %Drumbeat.Request{type: "foo"}
+    assert catch_error(decode base)
+  end
+
+  test "All valid http methods works" do
+    cases = [
+      "head",
+      "get",
+      "post",
+      "patch",
+      "delete",
+    ]
+    cases |> Enum.map(fn (x) ->
+      decode(%Drumbeat.Request{method: x}).method
+    end)
+    |> all_match(Enum.map(cases, &String.to_atom/1))
+  end
 end
