@@ -13,12 +13,8 @@ defmodule Drumbeat.Registry do
   end
 
   @doc """
-  Removes a request from the registry
+  Advances a request list one step.
   """
-  def remove_request(reg, id) do
-    Dict.pop(reg, id)
-  end
-
   def advance_request(reg, uuid, resp) do
     [_|requests] = Dict.get(reg, uuid, nil)
     case next_req(requests, resp) do
