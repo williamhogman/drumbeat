@@ -3,7 +3,8 @@ defmodule Drumbeat.DispatchSup do
   @worker_name Drumbeat.Sender
   @dispatch_name Drumbeat.Dispatch
 
-  def start_link, do: Supervisor.start_link(__MODULE__, :ok)
+  @spec start_link() :: Supervisor.on_start
+  def start_link, do: Supervisor.start_link(__MODULE__, :ok, [])
 
   defp pool_spec, do: supervisor(
             Task.Supervisor,
