@@ -32,18 +32,11 @@ defmodule Drumbeat.Sender.HTTP do
 
   @spec request(Req.t) :: Req.t
   def request(r = %Req{}) do
-    try do
-      resp = HTTPotion.request(r.method || :get, r.url,
-                               headers: preprocess_headers(r.headers),
-                               body: preprocess_body(r.body),
-                               timeout: @timeout)
-      %Req{headers: Enum.into(resp.headers, %{}),
-           body: decode_response_body(resp)}
-    rescue
-      e in HTTPotion.HTTPError ->
-        IO.inspect(r)
-        IO.inspect(e)
-        reraise e, System.stacktrace
-    end
+    resp = HTTPotion.request(r.method || :get, r.url,
+                             headers: preprocess_headers(r.headers),
+                             body: preprocess_body(r.body),
+                             timeout: @timeout)
+    %Req{headers: Enum.into(resp.headers, %{}),
+         body: decode_response_body(resp)}
   end
 end
