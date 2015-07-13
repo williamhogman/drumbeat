@@ -3,13 +3,7 @@ defmodule Drumbeat.WebHelpers do
   defmacro __using__(_) do
     quote do
       use Clint
-      defp first_header(conn, header) do
-        case get_req_header(conn, header) do
-          [x|_tail] -> x
-          [] -> nil
-        end
-      end
-
+      @spec write_headers(Plug.Conn.t, [{binary, binary}]) :: Plug.Conn.t
       def write_headers(conn, []), do: conn
       def write_headers(conn, headers) do
         Enum.reduce headers, conn, fn
