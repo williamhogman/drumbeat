@@ -69,8 +69,8 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   defp method(x) when is_binary(x), do: method_table(String.downcase(x))
   defp method(x) when is_atom(x), do: x
 
-  def decode(nil, opts), do: nil
-  def decode(value, opts) do
+  def decode(nil, _opts), do: nil
+  def decode(value, _opts) do
     value
     |> Map.put(:method, method(value.method))
     |> Map.put(:type, type(value.type))
@@ -79,7 +79,7 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
 end
 
 defimpl Poison.Encoder, for: PID do
-  def encode(value, opts) do
-    Poison.Encoder.encode("pid!", opts)
+  def encode(value, _opts) do
+    Poison.Encoder.encode(pid_to_list(value), opts)
   end
 end
