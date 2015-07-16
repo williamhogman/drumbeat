@@ -1,5 +1,6 @@
 alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Sender do
+  @spec perform_request(Req.t) :: Req.t
   defp perform_request(req) do
     case req.type do
       :http ->
@@ -13,5 +14,6 @@ defmodule Drumbeat.Sender do
     end
   end
 
-  def run(_, id, request), do: {id, perform_request(request)}
+  @spec run(binary, Req.t) :: {binary, Req.t}
+  def run(id, request), do: {id, perform_request(request)}
 end

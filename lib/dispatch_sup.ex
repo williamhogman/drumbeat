@@ -11,12 +11,14 @@ defmodule Drumbeat.DispatchSup do
             [[max_restarts: 5, max_seconds: 3600,
               restart: :transient]])
 
+
   def start_sender_pool(sup_pid), do: Supervisor.start_child(sup_pid, pool_spec)
 
+  @spec start_request_worker(pid, binary, Drumbeat.Request.t) :: Task.t
   def start_request_worker(worker_sup, id, req), do: Task.Supervisor.async(
             worker_sup,
             @worker_name, :run,
-            [self(), id, req])
+            [id, req])
 
   def init(:ok) do
     children = [
