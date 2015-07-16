@@ -1,5 +1,6 @@
 defmodule Drumbeat.Web do
   use Drumbeat.WebHelpers
+  plug Drumbeat.Serializer
 
   @max_timeout 100_000_000
   defp await_response(timeout \\ @max_timeout) do
@@ -26,14 +27,6 @@ defmodule Drumbeat.Web do
     send_resp(conn, 500, Posion.encode(%{error: :timeout}))
   end
 
-  @spec to_request(Plug.Conn.t, binary) :: Drumbeat.Request.t
-  def to_request(conn, body) do
-    headers = Enum.into(%{}, conn.req_headers)
-    %Drumbeat.Request{body: Drumbeat.Parser.parse(body), headers: headers, method: conn.method}
-    |> Drumbeat.Parser.parse
-  end
-
-
   defp perform_request(reqs) do
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, UUID.uuid4(), reqs)
     await_response()
@@ -46,11 +39,11 @@ defmodule Drumbeat.Web do
 
   def init(options), do: options
 
-  def call(conn, _opts) do
+  def call(start_conn, opts) do
+    conn = super(start_conn, opts)
     path = Enum.map(conn.path_info, &URI.decode/1)
-    {new_conn, body} = read_full_body!(conn)
-    body_reqs = %Drumbeat.Request{type: :eval, body: to_request(new_conn, body)}
+    body_reqs = %Drumbeat.Request{type: :eval, body: conn.assigns[:parsed_body]}
     reqs = path |> List.first |> template_for |> Drumbeat.Parser.with_template(body_reqs)
-    send_response(new_conn, perform_request(reqs))
+    send_response(conn, perform_request(reqs))
   end
 end
