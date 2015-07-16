@@ -21,15 +21,18 @@ defmodule Drumbeat.Web do
   defp send_response(conn, {:ok, resp}) do
     write_request(conn, resp)
   end
+
   defp send_response(conn, {:error, :timeout}) do
     send_resp(conn, 500, Posion.encode(%{error: :timeout}))
   end
 
+  @spec to_request(Plug.Conn.t, binary) :: Drumbeat.Request.t
   def to_request(conn, body) do
     headers = Enum.into(%{}, conn.req_headers)
     %Drumbeat.Request{body: Drumbeat.Parser.parse(body), headers: headers, method: conn.method}
     |> Drumbeat.Parser.parse
   end
+
 
   defp perform_request(reqs) do
     Drumbeat.Dispatch.place_request(Drumbeat.Dispatch, UUID.uuid4(), reqs)
@@ -41,7 +44,10 @@ defmodule Drumbeat.Web do
   defp template_for("raw"), do: "templates/raw.json"
   defp template_for(_), do: "templates/raw.json"
 
-  match "/*path" do
+  def init(options), do: options
+
+  def call(conn, _opts) do
+    path = Enum.map(conn.path_info, &URI.decode/1)
     {new_conn, body} = read_full_body!(conn)
     body_reqs = %Drumbeat.Request{type: :eval, body: to_request(new_conn, body)}
     reqs = path |> List.first |> template_for |> Drumbeat.Parser.with_template(body_reqs)
