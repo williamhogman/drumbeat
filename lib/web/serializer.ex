@@ -1,4 +1,4 @@
-defmodule Drumbeat.Serializer do
+defmodule Drumbeat.Web.Serializer do
   import Plug.Conn
   @behaviour Plug
 

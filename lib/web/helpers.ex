@@ -1,4 +1,4 @@
-defmodule Drumbeat.WebHelpers do
+defmodule Drumbeat.Web.Helpers do
   # Various helpers making it easier to with Plug and Clint
   defmacro __using__(_) do
     quote do
