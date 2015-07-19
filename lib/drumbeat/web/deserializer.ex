@@ -1,5 +1,5 @@
-defmodule Drumbeat.Web.Serializer do
-  alias Request
+defmodule Drumbeat.Web.Deserializer do
+  alias Drumbeat.Request
   import Plug.Conn
   @behaviour Plug
 

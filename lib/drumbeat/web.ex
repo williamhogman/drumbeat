@@ -1,6 +1,6 @@
 defmodule Drumbeat.Web do
   use Drumbeat.Web.Helpers
-  plug Drumbeat.Web.Serializer
+  plug Drumbeat.Web.Deserializer
 
   @max_timeout 100_000_000
   defp await_response(timeout \\ @max_timeout) do
