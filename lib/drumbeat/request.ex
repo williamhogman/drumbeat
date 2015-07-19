@@ -1,10 +1,11 @@
 defmodule Drumbeat.Request do
+  alias Drumbeat.Request
   defstruct url: nil, body: nil, headers: nil, method: nil, type: :http
   @type reqPart :: :url | :body | :headers | :method | :type
-  @type t :: %Drumbeat.Request{}
+  @type t :: %Request{}
 
   @spec successor(t, t) :: t
-  def successor(%Drumbeat.Request{} = resp, %Drumbeat.Request{} = next) do
+  def successor(%Request{} = resp, %Request{} = next) do
     next
     |> put_smart(:body, resp.body)
     |> put_smart(:headers, resp.headers)
@@ -37,12 +38,12 @@ defmodule Drumbeat.Request do
 
   @spec message_sink(pid) :: t
   def message_sink(pid) do
-    %Drumbeat.Request{type: :message_sink, url: pid}
+    %Request{type: :message_sink, url: pid}
   end
   @spec message_sink() :: t
   def message_sink, do: message_sink(self())
   @spec quote_req() :: t
-  def quote_req, do: %Drumbeat.Request{type: :quote}
+  def quote_req, do: %Request{type: :quote}
 end
 
 defimpl Poison.Decoder, for: Drumbeat.Request do
