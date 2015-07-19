@@ -1,13 +1,14 @@
 defmodule Drumbeat.Web.Serializer do
+  alias Request
   import Plug.Conn
   @behaviour Plug
 
   def init(options), do: options
 
-  @spec to_request(Plug.Conn.t, binary) :: Drumbeat.Request.t
+  @spec to_request(Plug.Conn.t, binary) :: Request.t
   def to_request(conn, body) do
     headers = Enum.into(%{}, conn.req_headers)
-    %Drumbeat.Request{body: Drumbeat.Parser.parse(body), headers: headers, method: conn.method}
+    %Request{body: Drumbeat.Parser.parse(body), headers: headers, method: conn.method}
     |> Drumbeat.Parser.parse
   end
 
