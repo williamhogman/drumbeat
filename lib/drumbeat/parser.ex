@@ -1,9 +1,5 @@
 alias Drumbeat.Request, as: Req
 defmodule Drumbeat.Parser do
-  @spec parse_json(nil | binary) :: Req.t
-  defp parse_json(x), do: Poison.decode!(x, as: [Req], keys: :atoms)
-
-  #@spec parse(Req.t | [Req.t]) :: Req.t | [Req.t]
   @spec parse(Req.t) :: Req.t
   def parse(%Req{} = x) do
     Poison.Decoder.decode(x, nil)
@@ -15,8 +11,16 @@ defmodule Drumbeat.Parser do
   end
   @spec parse(binary) :: [Req.t]
   def parse(x) when is_binary(x) do
-    x |> parse_json |> parse
+    x |> poison_parse_json |> parse
   end
+
+  @spec parse(binary) :: Req.t | [Req.t]
+  def parse_json(x) when is_binary(x) do
+    x |> poison_parse_json |> parse
+  end
+
+  @spec parse_json(nil | binary) :: Req.t
+  defp poison_parse_json(x), do: Poison.decode!(x, as: [Req], keys: :atoms)
 
   def with_template(fname, val) do
     fname |> from_file |> replace_template val
