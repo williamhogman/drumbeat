@@ -5,11 +5,17 @@ defmodule Drumbeat.Web.Deserializer do
 
   def init(options), do: options
 
-  @spec to_request(Plug.Conn.t, binary) :: Request.t
-  def to_request(conn, body) do
+  @spec to_request(Plug.Conn.t, binary) :: {:ok, Request.t} | {:error, :syntax_error}
+  defp to_request(conn, body) do
     headers = Enum.into(%{}, conn.req_headers)
-    %Request{body: Drumbeat.Parser.parse(body), headers: headers, method: conn.method}
-    |> Drumbeat.Parser.parse
+    try do
+      parsed_body = Drumbeat.Parser.parse_json(body)
+      req = %Request{body: parsed_body, headers: headers, method: conn.method}
+      |> Drumbeat.Parser.parse
+      {:ok, req}
+    rescue
+      e in Poison.SyntaxError -> {:error, :syntax_error}
+    end
   end
 
   @spec read_full_body!(Plug.Conn.t) :: {Plug.Conn.t, binary}
@@ -29,9 +35,14 @@ defmodule Drumbeat.Web.Deserializer do
     end
   end
 
+  @syntax_error_json "{ \"error\": \"JSON syntax error\"}"
   def call(conn, _opts) do
     {new_conn, body} = read_full_body!(conn)
-    req = to_request(new_conn, body)
-    assign(new_conn, :parsed_body, req)
+    case to_request(new_conn, body) do
+      {:ok, req} -> assign(new_conn, :parsed_body, req)
+      {:error, :syntax_error} ->
+        send_resp(conn, 400, @syntax_error_json)
+    end
+
   end
 end
