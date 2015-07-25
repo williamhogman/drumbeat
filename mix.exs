@@ -14,7 +14,7 @@ defmodule Drumbeat.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :httpotion]]
+    [applications: [:logger, :httpotion, :cowboy]]
   end
 
   # Dependencies can be Hex packages:
@@ -30,9 +30,11 @@ defmodule Drumbeat.Mixfile do
     [
         {:ibrowse, github: "cmullaparthi/ibrowse", tag: "v4.1.1"},
         {:httpotion, "~> 2.1.0"},
-        {:clint, github: "lpil/clint"},
+        {:cowboy, "~> 1.0"},
+        {:plug, "~> 0.13.0"},
         {:uuid, "~> 1.0" },
         {:poison, "~> 1.4"},
+        {:dialyze, "~> 0.2.0"}
     ]
   end
 end

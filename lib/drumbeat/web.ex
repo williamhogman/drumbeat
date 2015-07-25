@@ -16,8 +16,8 @@ defmodule Drumbeat.Web do
 
   if Mix.env == :dev do
     use Plug.Debugger
-    plug Clint.Logger
   end
+  plug Drumbeat.Web.Logger
   plug Drumbeat.Web.Deserializer
   plug Drumbeat.Web.Receiver
 end
