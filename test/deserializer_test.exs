@@ -1,5 +1,4 @@
 defmodule WebDerserializerTest do
-  alias Drumbeat.Request
   alias Drumbeat.Web.Deserializer
   use ExUnit.Case, async: true
   use Plug.Test
@@ -42,6 +41,12 @@ defmodule WebDerserializerTest do
     parsed_body = parsed_body(res)
     sanity_check(parsed_body)
     assert List.first(parsed_body.body).url == "foo"
+  end
+
+
+  test "bad json fails with 400" do
+    res = call_body "this is bad json"
+    assert res.status == 400
   end
 
 end
