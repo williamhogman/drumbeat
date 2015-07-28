@@ -6,7 +6,7 @@ defmodule Drumbeat.Web do
     send_resp(conn, conn.status, "Something went wrong!")
   end
 
-  def start do
+  def start_link do
     Plug.Adapters.Cowboy.http(__MODULE__, [], port: port)
   end
 
