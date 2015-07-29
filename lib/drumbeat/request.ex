@@ -55,6 +55,7 @@ defimpl Poison.Decoder, for: Drumbeat.Request do
   defp type("quote"), do: :quote
   defp type("placeholder"), do: :placeholder
   defp type("eval"), do: :eval
+  defp type("http_hook"), do: :http_hook
   defp type(x) when is_atom(x), do: x
 
   @spec url(binary) :: binary | :sender_pid

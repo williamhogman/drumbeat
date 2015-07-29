@@ -1,5 +1,6 @@
 defmodule Drumbeat.Web.Receiver do
   import Plug.Conn
+  alias Drumbeat.HooksStore
 
   @spec write_headers(Plug.Conn.t, [{binary, binary}]) :: Plug.Conn.t
   defp write_headers(conn, []), do: conn

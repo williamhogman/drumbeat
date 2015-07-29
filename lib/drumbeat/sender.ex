@@ -11,6 +11,9 @@ defmodule Drumbeat.Sender do
       :quote -> %Req{body: req, headers: []}
       :eval ->
         Drumbeat.Parser.parse(req.body.body)
+      :http_hook ->
+        :ok = Drumbeat.HooksStore.put({:http_hook, :ns, req.body.url}, Drumbeat.Parser.parse(req.body.body))
+        %Req{body: {saved: true}}
     end
   end
 

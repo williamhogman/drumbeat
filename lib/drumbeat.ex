@@ -15,10 +15,10 @@ defmodule Drumbeat do
 
   @web_proc Drumbeat.Web
   @dispatch_sup_proc Drumbeat.DispatchSup
+  @hooks_store_proc Drumbeat.HooksStore
   defp children, do: [
     worker(@web_proc, [], restart: :transient),
     worker(@dispatch_sup_proc, [], restart: :transient),
+    worker(@hooks_store_proc, [[name: @hooks_store_proc]], restart: :transient)
   ]
-
-
 end
