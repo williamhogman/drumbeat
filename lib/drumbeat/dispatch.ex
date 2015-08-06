@@ -1,4 +1,5 @@
 defmodule Drumbeat.Dispatch do
+  alias Drumbeat.Preload
   import GenServer
   use GenServer
   @type t :: %Drumbeat.Dispatch{tasks: [Task.t], pool: nil | pid}
@@ -29,7 +30,15 @@ defmodule Drumbeat.Dispatch do
 
   def handle_cast({:start_pool, pid}, state) do
     {:ok, pid} = Drumbeat.DispatchSup.start_sender_pool(pid)
+    cast(self(), :preload_data)
     {:noreply, %Drumbeat.Dispatch{state | pool: pid}}
+  end
+
+  defp handle_cast(:preload_data, state) do
+    uuid = UUID.uuid4()
+    requests = Preload.build_request
+    new_state = internal_place_request(state, uuid, requests)
+    {:noreply, new_state}
   end
 
   @spec report_response(binary, Drumbeat.Request.t, Drumbeat.Dispatch.t, Task.t) :: any

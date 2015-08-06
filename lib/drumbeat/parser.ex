@@ -26,7 +26,7 @@ defmodule Drumbeat.Parser do
     fname |> from_file |> replace_template val
   end
 
-  defp from_file(fname) do
+  def from_file(fname) do
     fname |> File.read! |> parse
   end
 
